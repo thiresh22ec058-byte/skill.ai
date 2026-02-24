@@ -31,7 +31,7 @@ function Layout({ children }) {
 
       </div>
 
-      {/* Animated Main Content */}
+      {/* Main Content */}
       <div className="main-content">
         <AnimatePresence mode="wait">
           <motion.div
@@ -40,7 +40,11 @@ function Layout({ children }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.4 }}
-            style={{ width: "100%" }}
+            style={{
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+            }}
           >
             {children}
           </motion.div>

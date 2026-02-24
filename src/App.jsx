@@ -6,7 +6,7 @@ import SkillInput from "./pages/SkillInput";
 import Summary from "./pages/Summary";
 import Roadmap from "./pages/Roadmap";
 import Progress from "./pages/Progress";
-import JobReady from "./pages/JobReady";   // ✅ Added this
+import JobReady from "./pages/JobReady";
 import Profile from "./pages/Profile";
 
 function App() {
@@ -20,7 +20,7 @@ function App() {
         <Route path="/summary" element={<Summary />} />
         <Route path="/roadmap" element={<Roadmap />} />
         <Route path="/progress" element={<Progress />} />
-        <Route path="/jobready" element={<JobReady />} />  {/* ✅ Added this */}
+        <Route path="/jobready" element={<JobReady />} />
         <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
