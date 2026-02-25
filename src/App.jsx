@@ -1,29 +1,27 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Welcome from "./pages/Welcome";
-import UserType from "./pages/UserType";
-import CareerGoal from "./pages/CareerGoal";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Register from "./pages/Register";
+import Login from "./pages/Login";
 import SkillInput from "./pages/SkillInput";
 import Summary from "./pages/Summary";
 import Roadmap from "./pages/Roadmap";
+import Profile from "./pages/Profile";
 import Progress from "./pages/Progress";
 import JobReady from "./pages/JobReady";
-import Profile from "./pages/Profile";
 
 function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
-        <Route path="/" element={<Welcome />} />
-        <Route path="/usertype" element={<UserType />} />
-        <Route path="/careergoal" element={<CareerGoal />} />
-        <Route path="/skills" element={<SkillInput />} />
+        <Route path="/" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/skillinput" element={<SkillInput />} />
         <Route path="/summary" element={<Summary />} />
         <Route path="/roadmap" element={<Roadmap />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/jobready" element={<JobReady />} />
-        <Route path="/profile" element={<Profile />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
 

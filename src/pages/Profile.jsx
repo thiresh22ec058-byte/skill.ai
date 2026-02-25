@@ -1,75 +1,57 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 
 function Profile() {
-  const location = useLocation();
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const {
-    careerGoal = "Not Selected",
-    progressPercent = 0,
-    jobReadiness: passedJobReadiness
-  } = location.state || {};
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
 
-  const jobReadiness =
-    passedJobReadiness !== undefined
-      ? passedJobReadiness
-      : Math.min(progressPercent + 20, 100);
+        const response = await axios.get(
+          "http://localhost:5000/api/users/profile",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+        setUser(response.data);
+        setLoading(false);
+
+      } catch (error) {
+        localStorage.removeItem("token");
+        navigate("/login");
+      }
+    };
+
+    fetchProfile();
+  }, [navigate]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/login");
+  };
+
+  if (loading) {
+    return <h2 style={{ color: "white" }}>Loading...</h2>;
+  }
 
   return (
     <Layout>
-      <div className="fade-in">
-        <div className="glass-card">
+      <div className="glass-card">
+        <h2>Welcome, {user.name}</h2>
+        <p>Email: {user.email}</p>
 
-          <h2 className="hero-title" style={{ fontSize: "32px" }}>
-            Your Profile Dashboard
-          </h2>
-
-          <div className="analysis-box">
-            <h4>🎯 Career Goal</h4>
-            <p>{careerGoal}</p>
-          </div>
-
-          <div className="analysis-box">
-            <h4>📊 Progress</h4>
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{ width: `${progressPercent}%` }}
-              ></div>
-            </div>
-            <p style={{ marginTop: "10px" }}>
-              {progressPercent}% Completed
-            </p>
-          </div>
-
-          <div className="analysis-box">
-            <h4>💼 Job Readiness</h4>
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{ width: `${jobReadiness}%` }}
-              ></div>
-            </div>
-            <p style={{ marginTop: "10px" }}>
-              {jobReadiness}% Job Ready
-            </p>
-          </div>
-
-          <div className="analysis-box">
-            <h4>🛠 My Projects</h4>
-            <p>• Calculator App</p>
-            <p>• Student Database System</p>
-          </div>
-
-          <button
-            className="primary-btn"
-            onClick={() => navigate("/roadmap")}
-          >
-            Continue Learning →
-          </button>
-
-        </div>
+        <button onClick={handleLogout} className="primary-btn">
+          Logout
+        </button>
       </div>
     </Layout>
   );

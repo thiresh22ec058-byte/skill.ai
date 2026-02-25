@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import axios from "axios";
 
 function SkillInput() {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ function SkillInput() {
 
   const [skillInput, setSkillInput] = useState("");
   const [skills, setSkills] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   const addSkill = () => {
     if (skillInput.trim() !== "" && !skills.includes(skillInput.trim())) {
@@ -19,6 +21,42 @@ function SkillInput() {
 
   const removeSkill = (skill) => {
     setSkills(skills.filter((s) => s !== skill));
+  };
+
+  const handleAnalyze = async () => {
+    try {
+      setLoading(true);
+
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        alert("Please login again");
+        navigate("/login");
+        return;
+      }
+
+      // Save skills to backend
+      await axios.put(
+        "http://localhost:5000/api/users/skills",
+        { skills },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Navigate to summary after saving
+      navigate("/summary", {
+        state: { userType, careerGoal, skills },
+      });
+
+    } catch (error) {
+      console.error(error);
+      alert("Failed to save skills");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,21 +91,17 @@ function SkillInput() {
           {skills.map((skill) => (
             <div key={skill} className="chip">
               {skill}
-              <span onClick={() => removeSkill(skill)}>✕</span>
+              <span onClick={() => removeSkill(skill)}> ✕ </span>
             </div>
           ))}
         </div>
 
         <button
           className="primary-btn"
-          disabled={skills.length === 0}
-          onClick={() =>
-            navigate("/summary", {
-              state: { userType, careerGoal, skills },
-            })
-          }
+          disabled={skills.length === 0 || loading}
+          onClick={handleAnalyze}
         >
-          Analyze →
+          {loading ? "Saving..." : "Analyze →"}
         </button>
 
       </div>
