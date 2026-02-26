@@ -1,4 +1,3 @@
-const { registerUser, loginUser, getProfile, updateSkills } = require("../controllers/userController");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -56,7 +55,7 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// Protected Profile
+// Profile
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
@@ -71,20 +70,8 @@ exports.getProfile = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-exports.getProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select("-password");
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.json(user);
-
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
+// Update Skills
 exports.updateSkills = async (req, res) => {
   try {
     const { skills } = req.body;

@@ -1,69 +1,90 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import Layout from "../components/Layout";
+import { useEffect, useState } from "react";
 
 function Roadmap() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { careerGoal, skillsYouHave, skillsMissing } = location.state || {};
+  const { analysis } = location.state || {};
 
-  const generateRoadmap = () => {
-    if (!skillsMissing || skillsMissing.length === 0) {
-      return [
-        { title: "Week 1–2", tasks: ["Revise core concepts"] },
-        { title: "Week 3–4", tasks: ["Build 1 project"] }
-      ];
+  const [completed, setCompleted] = useState([]);
+
+  useEffect(() => {
+    if (!analysis) {
+      navigate("/");
     }
+  }, [analysis, navigate]);
 
-    return skillsMissing.map((skill, index) => ({
-      title: `Week ${index * 2 + 1}–${index * 2 + 2}`,
-      tasks: [`Learn ${skill}`, `Practice ${skill}`]
-    }));
+  if (!analysis) return null;
+
+  const toggleComplete = (index) => {
+    if (completed.includes(index)) {
+      setCompleted(completed.filter((i) => i !== index));
+    } else {
+      setCompleted([...completed, index]);
+    }
   };
 
-  const roadmap = generateRoadmap();
+  const progress = Math.round(
+    (completed.length / analysis.roadmap.length) * 100
+  );
 
   return (
-    <Layout>
-      <div className="fade-in">
-        <div className="glass-card">
+    <div className="page-container">
+      <div className="glass-card">
+        <h2>📚 Learning Plan</h2>
 
-          <h2 className="hero-title" style={{ fontSize: "32px" }}>
-            Your Learning Roadmap
-          </h2>
+        {analysis.roadmap.map((week, index) => (
+          <div key={index} style={{ marginBottom: "25px" }}>
+            
+            {/* Week Title */}
+            <h3>{week.title}</h3>
 
-          <p className="subtitle">
-            AI-generated roadmap for <strong>{careerGoal}</strong>
-          </p>
+            {/* Course Links */}
+            {week.courses.map((course, i) => (
+              <div key={i} style={{ marginLeft: "20px", marginBottom: "6px" }}>
+                <a
+                  href={course.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#4fa3ff", textDecoration: "none" }}
+                >
+                  ▶ {course.name}
+                </a>
+              </div>
+            ))}
 
-          {roadmap.map((week, index) => (
-            <div key={index} className="analysis-box">
-              <h4>{week.title}</h4>
-              {week.tasks.map((task, i) => (
-                <p key={i}>• {task}</p>
-              ))}
-            </div>
-          ))}
+            {/* Complete Button */}
+            <button
+              style={{ marginTop: "10px" }}
+              onClick={() => toggleComplete(index)}
+            >
+              {completed.includes(index)
+                ? "Completed ✓"
+                : "Mark Complete"}
+            </button>
 
+          </div>
+        ))}
+
+        {/* Progress Section */}
+        <h3 style={{ marginTop: "20px" }}>
+          Progress: {progress}%
+        </h3>
+
+        {/* Unlock Jobs */}
+        {progress >= 60 && (
           <button
             className="primary-btn"
-            onClick={() =>
-              navigate("/progress", {
-                state: {
-                  careerGoal,
-                  roadmap,
-                  skillsYouHave,
-                  skillsMissing
-                }
-              })
-            }
+            style={{ marginTop: "20px" }}
+            onClick={() => navigate("/jobs")}
           >
-            Check Progress →
+            View Recommended Jobs →
           </button>
+        )}
 
-        </div>
       </div>
-    </Layout>
+    </div>
   );
 }
 

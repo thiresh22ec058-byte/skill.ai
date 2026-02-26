@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
@@ -7,14 +7,6 @@ function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // ✅ Step 3 – Auto redirect if already logged in
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      navigate("/profile");
-    }
-  }, [navigate]);
 
   const handleLogin = async () => {
     try {
@@ -30,11 +22,12 @@ function Login() {
         }
       );
 
-      // ✅ Save token
       localStorage.setItem("token", response.data.token);
 
       alert("Login Successful!");
-      navigate("/profile");
+
+      // 🔥 IMPORTANT — go to Welcome first
+      navigate("/welcome");
 
     } catch (error) {
       alert(error.response?.data?.message || "Login failed");

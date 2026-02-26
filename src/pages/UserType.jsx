@@ -1,45 +1,134 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function UserType() {
-  const [selected, setSelected] = useState("");
-  const navigate = useNavigate();
+const domains = [
+  "Software Development",
+  "Web Development",
+  "Mobile Development",
+  "Data Science",
+  "Artificial Intelligence",
+  "Machine Learning",
+  "Cybersecurity",
+  "Cloud Computing",
+  "DevOps",
+  "Blockchain",
+  "Game Development",
+  "UI/UX Design",
+  "Product Management (Tech)",
+  "Embedded Systems",
+  "IoT Engineering",
 
-  const options = [
-    "College Student",
-    "Final Year Student",
-    "Fresher",
-    "Working Professional"
-  ];
+  "Mechanical Engineering",
+  "Civil Engineering",
+  "Electrical Engineering",
+  "Electronics Engineering",
+  "Automobile Engineering",
+  "Aerospace Engineering",
+  "Robotics Engineering",
+  "Mechatronics",
+  "Industrial Engineering",
+  "Chemical Engineering",
+
+  "Entrepreneurship",
+  "Startup Founder",
+  "Business Management",
+  "Finance & Banking",
+  "Investment & Trading",
+  "Marketing",
+  "Digital Marketing",
+  "Human Resources",
+  "Operations Management",
+  "Supply Chain Management",
+
+  "Graphic Design",
+  "Content Creation",
+  "Video Editing",
+  "Animation",
+  "Photography",
+
+  "Healthcare & Medicine",
+  "Law",
+  "Education",
+  "Research & Academia",
+  "Government Services",
+
+  "Environmental Science",
+  "Renewable Energy",
+  "Agriculture Technology",
+  "Space & Astronomy",
+  "Sports & Fitness"
+];
+
+function GoalSelection() {
+  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  const [selectedGoal, setSelectedGoal] = useState("");
+
+  const filteredDomains = domains.filter(domain =>
+    domain.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const handleNext = () => {
+    const finalGoal = selectedGoal || search;
+
+    if (!finalGoal.trim()) {
+      alert("Please select or type a goal");
+      return;
+    }
+
+    navigate("/skills", {
+      state: { careerGoal: finalGoal }
+    });
+  };
 
   return (
     <div className="page-container">
       <div className="glass-card">
 
-        <h2 className="hero-title" style={{fontSize: "36px"}}>
-          Who Are You?
-        </h2>
+        <h2>What Do You Want To Become?</h2>
+        <p>Choose your dream role. AI will build your roadmap.</p>
 
-        <p className="subtitle">
-          Select your current stage. You can change it later.
-        </p>
+        <input
+          type="text"
+          placeholder="Search role..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setSelectedGoal("");
+          }}
+          className="ai-input"
+        />
 
-        {options.map((option) => (
-          <button
-            key={option}
-            className={`option-btn ${selected === option ? "selected" : ""}`}
-            onClick={() => setSelected(option)}
-          >
-            {option}
-          </button>
-        ))}
+        {/* Suggestions */}
+        {search && (
+          <div style={{ marginTop: "10px", maxHeight: "200px", overflowY: "auto" }}>
+            {filteredDomains.map((domain, index) => (
+              <div
+                key={index}
+                style={{
+                  padding: "8px",
+                  cursor: "pointer",
+                  background: "#1e293b",
+                  marginBottom: "5px",
+                  borderRadius: "5px"
+                }}
+                onClick={() => {
+                  setSelectedGoal(domain);
+                  setSearch(domain);
+                }}
+              >
+                {domain}
+              </div>
+            ))}
+          </div>
+        )}
 
         <button
           className="primary-btn"
-          disabled={!selected}
-          onClick={() => navigate("/careergoal", { state: { userType: selected } })}
+          style={{ marginTop: "20px" }}
+          onClick={handleNext}
         >
-          Continue →
+          Next →
         </button>
 
       </div>
@@ -47,4 +136,4 @@ function UserType() {
   );
 }
 
-export default UserType;
+export default GoalSelection;

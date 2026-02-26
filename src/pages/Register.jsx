@@ -27,7 +27,7 @@ function Register() {
       );
 
       alert("Registered Successfully!");
-      navigate("/skillinput");
+      navigate("/usertype");
 
     } catch (error) {
       console.log("REGISTER ERROR:", error.response?.data);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
@@ -12,9 +12,16 @@ function SkillInput() {
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    if (!userType || !careerGoal) {
+      navigate("/usertype");
+    }
+  }, [userType, careerGoal, navigate]);
+
   const addSkill = () => {
-    if (skillInput.trim() !== "" && !skills.includes(skillInput.trim())) {
-      setSkills([...skills, skillInput.trim()]);
+    const trimmed = skillInput.trim();
+    if (trimmed !== "" && !skills.includes(trimmed)) {
+      setSkills([...skills, trimmed]);
       setSkillInput("");
     }
   };
@@ -27,33 +34,26 @@ function SkillInput() {
     try {
       setLoading(true);
 
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        alert("Please login again");
-        navigate("/login");
-        return;
-      }
-
-      // Save skills to backend
-      await axios.put(
-        "http://localhost:5000/api/users/skills",
-        { skills },
+      const analyzeResponse = await axios.post(
+        "http://localhost:5000/api/analyze",
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          skills: skills.join(", "),
+          goal: careerGoal,
         }
       );
 
-      // Navigate to summary after saving
       navigate("/summary", {
-        state: { userType, careerGoal, skills },
+        state: {
+          userType,
+          careerGoal,
+          skills,
+          analysis: analyzeResponse.data,
+        },
       });
 
     } catch (error) {
-      console.error(error);
-      alert("Failed to save skills");
+      console.error("Analyze Error:", error);
+      alert("Failed to analyze skills");
     } finally {
       setLoading(false);
     }
@@ -62,7 +62,6 @@ function SkillInput() {
   return (
     <div className="page-container">
       <div className="glass-card">
-
         <h2 className="hero-title" style={{ fontSize: "34px" }}>
           Your Current Skills
         </h2>
@@ -71,7 +70,6 @@ function SkillInput() {
           Tell us what you already know. AI will analyze your strengths.
         </p>
 
-        {/* Input */}
         <div className="skill-input-wrapper">
           <input
             type="text"
@@ -86,7 +84,6 @@ function SkillInput() {
           </button>
         </div>
 
-        {/* Skill Chips */}
         <div className="skill-chips">
           {skills.map((skill) => (
             <div key={skill} className="chip">
@@ -101,9 +98,8 @@ function SkillInput() {
           disabled={skills.length === 0 || loading}
           onClick={handleAnalyze}
         >
-          {loading ? "Saving..." : "Analyze →"}
+          {loading ? "Analyzing..." : "Analyze →"}
         </button>
-
       </div>
     </div>
   );

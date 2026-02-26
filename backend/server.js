@@ -1,23 +1,50 @@
-const express = require("express");
-const cors = require("cors");
-require("dotenv").config({ path: "./.env" });  // Load .env properly
-const connectDB = require("./config/db");
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import mongoose from "mongoose";
+import { normalizeGoal } from "./config/careerDomains.js";   // ✅ must be at top
+
+dotenv.config();
 
 const app = express();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Connect Database
-connectDB();
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.log(err));
 
-// Routes
-app.use("/api/users", require("./routes/userRoutes"));
 
-// Port
-const PORT = process.env.PORT || 5000;
+// ✅ STEP 3 CODE GOES HERE
+app.post("/api/analyze", (req, res) => {
+  const { goal } = req.body;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  const domain = normalizeGoal(goal);
+
+  let roadmap = [
+    {
+      title: `Week 1-2: Introduction to ${domain}`,
+      courses: [
+        {
+          name: `${domain} Basics`,
+          link: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        }
+      ]
+    }
+  ];
+
+  res.json({
+    career: goal,
+    domain,
+    skillGap: `Build strong fundamentals in ${domain}`,
+    roadmap,
+    progress: 0
+  });
+});
+
+
+// Start server
+app.listen(5000, () => {
+  console.log("Server running on port 5000");
 });

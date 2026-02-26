@@ -1,6 +1,8 @@
 import { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Welcome() {
+  const navigate = useNavigate();
   const aboutRef = useRef(null);
   const contactRef = useRef(null);
 
@@ -11,7 +13,6 @@ function Welcome() {
   return (
     <div className="landing-container">
 
-      {/* Navbar */}
       <nav className="navbar">
         <div 
           className="logo"
@@ -33,13 +34,12 @@ function Welcome() {
             Contact
           </span>
 
-          <span onClick={() => window.location.href = "/login"}>
+          <span onClick={() => navigate("/login")}>
             Login
           </span>
         </div>
       </nav>
 
-      {/* Hero Section */}
       <div className="hero-section">
         <h1 className="hero-title">
           Learn. Build. Succeed.
@@ -51,14 +51,13 @@ function Welcome() {
         </p>
 
         <button 
-  className="primary-btn"
-  onClick={() => window.location.href = "/register"}
->
-  Get Started →
-</button>
+          className="primary-btn"
+          onClick={() => navigate("/usertype")}
+        >
+          Get Started →
+        </button>
       </div>
 
-      {/* About Section */}
       <div className="section" ref={aboutRef}>
         <h2>About SkillAI</h2>
         <p>
@@ -67,7 +66,6 @@ function Welcome() {
         </p>
       </div>
 
-      {/* Contact Section */}
       <div className="section" ref={contactRef}>
         <h2>Contact Us</h2>
         <p>Email: support@skillai.com</p>
