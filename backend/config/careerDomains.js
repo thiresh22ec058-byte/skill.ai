@@ -1,7 +1,9 @@
-// 50 Domain Category Mapping
+// ===============================
+// DOMAIN CATEGORY KEYWORD MATCHING
+// ===============================
 
 export const domainCategories = {
-  "Software Development": ["software", "developer", "programmer", "engineer", "coding"],
+  "Software Development": ["software", "developer", "programming", "coding"],
   "Web Development": ["web", "frontend", "backend", "full stack"],
   "Mobile Development": ["android", "ios", "mobile app"],
   "Data Science": ["data scientist", "data analyst", "analytics"],
@@ -13,6 +15,7 @@ export const domainCategories = {
   "Blockchain": ["blockchain", "crypto", "web3"],
   "Game Development": ["game developer", "unity", "unreal"],
   "UI/UX Design": ["ui", "ux", "designer"],
+  "Product Management": ["product manager"],
   "Embedded Systems": ["embedded", "microcontroller"],
   "IoT Engineering": ["iot", "internet of things"],
 
@@ -23,8 +26,9 @@ export const domainCategories = {
   "Automobile Engineering": ["automobile"],
   "Aerospace Engineering": ["aerospace"],
   "Robotics Engineering": ["robotics"],
-  "Chemical Engineering": ["chemical"],
+  "Mechatronics": ["mechatronics"],
   "Industrial Engineering": ["industrial"],
+  "Chemical Engineering": ["chemical"],
 
   "Entrepreneurship": ["entrepreneur", "startup", "founder", "business owner"],
   "Business Management": ["management", "manager"],
@@ -56,10 +60,207 @@ export const domainCategories = {
 };
 
 
-// Normalize function
+// ===============================
+// REQUIRED SKILLS PER DOMAIN
+// ===============================
+
+export const domainSkills = {
+
+  "Software Development": [
+    "Programming",
+    "Data Structures",
+    "Git",
+    "SQL",
+    "Problem Solving",
+    "Projects"
+  ],
+
+  "Web Development": [
+    "HTML",
+    "CSS",
+    "JavaScript",
+    "React",
+    "Backend Development",
+    "Projects"
+  ],
+
+  "Mobile Development": [
+    "Java/Kotlin",
+    "Swift",
+    "Flutter/React Native",
+    "API Integration",
+    "Mobile UI Design"
+  ],
+
+  "Data Science": [
+    "Python",
+    "Statistics",
+    "Data Visualization",
+    "Machine Learning",
+    "SQL"
+  ],
+
+  "Artificial Intelligence": [
+    "Python",
+    "Machine Learning",
+    "Deep Learning",
+    "Neural Networks",
+    "Projects"
+  ],
+
+  "Machine Learning": [
+    "Python",
+    "Statistics",
+    "Algorithms",
+    "Model Training",
+    "Projects"
+  ],
+
+  "Cybersecurity": [
+    "Networking",
+    "Linux",
+    "Ethical Hacking",
+    "Cryptography",
+    "Security Tools"
+  ],
+
+  "Cloud Computing": [
+    "AWS/Azure/GCP",
+    "Linux",
+    "Networking",
+    "Deployment",
+    "DevOps Basics"
+  ],
+
+  "DevOps": [
+    "CI/CD",
+    "Docker",
+    "Kubernetes",
+    "Cloud",
+    "Automation"
+  ],
+
+  "Blockchain": [
+    "Cryptography",
+    "Smart Contracts",
+    "Solidity",
+    "Web3",
+    "Projects"
+  ],
+
+  "IoT Engineering": [
+    "Programming",
+    "Embedded Systems",
+    "Microcontrollers",
+    "Sensors",
+    "Networking",
+    "IoT Projects"
+  ],
+
+  "Mechanical Engineering": [
+    "Engineering Mechanics",
+    "Thermodynamics",
+    "CAD",
+    "Manufacturing",
+    "Projects"
+  ],
+
+  "Civil Engineering": [
+    "Structural Analysis",
+    "Construction Planning",
+    "AutoCAD",
+    "Material Science"
+  ],
+
+  "Electrical Engineering": [
+    "Circuit Theory",
+    "Power Systems",
+    "Control Systems",
+    "Electronics"
+  ],
+
+  "Electronics Engineering": [
+    "Digital Electronics",
+    "Analog Circuits",
+    "Microcontrollers",
+    "Embedded Systems"
+  ],
+
+  "Entrepreneurship": [
+    "Business Planning",
+    "Marketing",
+    "Finance",
+    "Leadership",
+    "Networking"
+  ],
+
+  "Finance & Banking": [
+    "Accounting",
+    "Financial Analysis",
+    "Investment Basics",
+    "Risk Management"
+  ],
+
+  "Digital Marketing": [
+    "SEO",
+    "Social Media Marketing",
+    "Content Strategy",
+    "Analytics"
+  ],
+
+  "Graphic Design": [
+    "Photoshop",
+    "Illustrator",
+    "Typography",
+    "Branding"
+  ],
+
+  "Healthcare & Medicine": [
+    "Biology",
+    "Human Anatomy",
+    "Medical Terminology",
+    "Patient Care",
+    "Clinical Knowledge"
+  ],
+
+  "Law": [
+    "Legal Research",
+    "Constitutional Law",
+    "Drafting",
+    "Court Procedures"
+  ],
+
+  "Education": [
+    "Subject Knowledge",
+    "Teaching Methods",
+    "Communication",
+    "Classroom Management"
+  ],
+
+  "Environmental Science": [
+    "Ecology",
+    "Climate Studies",
+    "Sustainability",
+    "Research Methods"
+  ]
+};
+
+
+// ===============================
+// NORMALIZE FUNCTION
+// ===============================
+
 export function normalizeGoal(goal) {
   const lowerGoal = goal.toLowerCase();
 
+  // Exact match
+  for (const domain in domainCategories) {
+    if (domain.toLowerCase() === lowerGoal) {
+      return domain;
+    }
+  }
+
+  // Keyword match
   for (const domain in domainCategories) {
     if (
       domainCategories[domain].some(keyword =>
@@ -70,5 +271,5 @@ export function normalizeGoal(goal) {
     }
   }
 
-  return "General Career Path";
+  return "Software Development"; // safe fallback
 }

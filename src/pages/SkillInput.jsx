@@ -13,10 +13,10 @@ function SkillInput() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!userType || !careerGoal) {
-      navigate("/usertype");
-    }
-  }, [userType, careerGoal, navigate]);
+  if (!careerGoal) {
+    navigate("/");
+  }
+}, [careerGoal, navigate]);
 
   const addSkill = () => {
     const trimmed = skillInput.trim();

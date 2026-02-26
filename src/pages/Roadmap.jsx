@@ -15,7 +15,7 @@ function Roadmap() {
     }
   }, [analysis, navigate]);
 
-  if (!analysis) return null;
+  if (!analysis || !analysis.roadmap) return null;
 
   const toggleComplete = (index) => {
     if (completed.includes(index)) {
@@ -25,34 +25,32 @@ function Roadmap() {
     }
   };
 
-  const progress = Math.round(
-    (completed.length / analysis.roadmap.length) * 100
-  );
+  const progress = analysis.roadmap.length
+    ? Math.round((completed.length / analysis.roadmap.length) * 100)
+    : 0;
 
   return (
     <div className="page-container">
       <div className="glass-card">
         <h2>📚 Learning Plan</h2>
 
-        {analysis.roadmap.map((week, index) => (
+        {analysis.roadmap.map((item, index) => (
           <div key={index} style={{ marginBottom: "25px" }}>
             
-            {/* Week Title */}
-            <h3>{week.title}</h3>
+            {/* Topic Title */}
+            <h3>{item.title}</h3>
 
-            {/* Course Links */}
-            {week.courses.map((course, i) => (
-              <div key={i} style={{ marginLeft: "20px", marginBottom: "6px" }}>
-                <a
-                  href={course.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "#4fa3ff", textDecoration: "none" }}
-                >
-                  ▶ {course.name}
-                </a>
-              </div>
-            ))}
+            {/* Playlist Link */}
+            <div style={{ marginLeft: "20px", marginBottom: "8px" }}>
+              <a
+                href={item.playlist}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "#4fa3ff", textDecoration: "none" }}
+              >
+                ▶ Watch Full Playlist
+              </a>
+            </div>
 
             {/* Complete Button */}
             <button
@@ -63,7 +61,6 @@ function Roadmap() {
                 ? "Completed ✓"
                 : "Mark Complete"}
             </button>
-
           </div>
         ))}
 
@@ -82,7 +79,6 @@ function Roadmap() {
             View Recommended Jobs →
           </button>
         )}
-
       </div>
     </div>
   );

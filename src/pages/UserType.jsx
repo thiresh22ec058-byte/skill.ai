@@ -14,7 +14,6 @@ const domains = [
   "Blockchain",
   "Game Development",
   "UI/UX Design",
-  "Product Management (Tech)",
   "Embedded Systems",
   "IoT Engineering",
 
@@ -25,54 +24,46 @@ const domains = [
   "Automobile Engineering",
   "Aerospace Engineering",
   "Robotics Engineering",
-  "Mechatronics",
-  "Industrial Engineering",
   "Chemical Engineering",
 
   "Entrepreneurship",
-  "Startup Founder",
   "Business Management",
   "Finance & Banking",
-  "Investment & Trading",
   "Marketing",
   "Digital Marketing",
   "Human Resources",
-  "Operations Management",
-  "Supply Chain Management",
 
   "Graphic Design",
   "Content Creation",
   "Video Editing",
   "Animation",
-  "Photography",
 
   "Healthcare & Medicine",
   "Law",
   "Education",
   "Research & Academia",
-  "Government Services",
 
   "Environmental Science",
   "Renewable Energy",
-  "Agriculture Technology",
   "Space & Astronomy",
   "Sports & Fitness"
 ];
 
 function GoalSelection() {
   const navigate = useNavigate();
+
   const [search, setSearch] = useState("");
-  const [selectedGoal, setSelectedGoal] = useState("");
+  const [selectedGoal, setSelectedGoal] = useState(null);
 
   const filteredDomains = domains.filter(domain =>
     domain.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleNext = () => {
-    const finalGoal = selectedGoal || search;
+    let finalGoal = selectedGoal;
 
-    if (!finalGoal.trim()) {
-      alert("Please select or type a goal");
+    if (!finalGoal) {
+      alert("Please select a goal from suggestions");
       return;
     }
 
@@ -88,29 +79,31 @@ function GoalSelection() {
         <h2>What Do You Want To Become?</h2>
         <p>Choose your dream role. AI will build your roadmap.</p>
 
+        {/* Search Input */}
         <input
           type="text"
           placeholder="Search role..."
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
-            setSelectedGoal("");
+            setSelectedGoal(null);  // reset selection
           }}
           className="ai-input"
         />
 
         {/* Suggestions */}
         {search && (
-          <div style={{ marginTop: "10px", maxHeight: "200px", overflowY: "auto" }}>
+          <div style={{ marginTop: "10px" }}>
             {filteredDomains.map((domain, index) => (
               <div
                 key={index}
                 style={{
                   padding: "8px",
                   cursor: "pointer",
-                  background: "#1e293b",
+                  background:
+                    selectedGoal === domain ? "#334155" : "#1e293b",
                   marginBottom: "5px",
-                  borderRadius: "5px"
+                  borderRadius: "6px"
                 }}
                 onClick={() => {
                   setSelectedGoal(domain);
@@ -123,9 +116,43 @@ function GoalSelection() {
           </div>
         )}
 
+        {/* Default Popular Goals (Always Visible) */}
+        <div style={{ marginTop: "20px" }}>
+          <h4>Popular Goals</h4>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+            {[
+              "Software Development",
+              "Data Science",
+              "Entrepreneurship",
+              "Healthcare & Medicine",
+              "Cybersecurity"
+            ].map((goal, i) => (
+              <button
+                key={i}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: "20px",
+                  border: "none",
+                  cursor: "pointer",
+                  background:
+                    selectedGoal === goal ? "#4f46e5" : "#1e293b",
+                  color: "white"
+                }}
+                onClick={() => {
+                  setSelectedGoal(goal);
+                  setSearch(goal);
+                }}
+              >
+                {goal}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Next Button */}
         <button
           className="primary-btn"
-          style={{ marginTop: "20px" }}
+          style={{ marginTop: "25px" }}
           onClick={handleNext}
         >
           Next →
