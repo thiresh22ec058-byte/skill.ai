@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar";
 
 function Welcome() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ function Welcome() {
   };
 
   return (
+    
     <div className="landing-container">
 
       <nav className="navbar">

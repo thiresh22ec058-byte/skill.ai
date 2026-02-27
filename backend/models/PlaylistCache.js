@@ -1,10 +1,22 @@
+// backend/models/PlaylistCache.js
+
 import mongoose from "mongoose";
 
+const videoSchema = new mongoose.Schema({
+  title: String,
+  videoId: String,
+  duration: Number
+});
+
+const weekSchema = new mongoose.Schema({
+  week: Number,
+  totalDuration: Number,
+  videos: [videoSchema]
+});
+
 const playlistCacheSchema = new mongoose.Schema({
-  goal: { type: String, required: true, unique: true },
-  domain: { type: String, required: true },
-  roadmap: { type: Array, required: true },
-  createdAt: { type: Date, default: Date.now }
+  goal: String,
+  roadmap: [weekSchema]
 });
 
 export default mongoose.model("PlaylistCache", playlistCacheSchema);

@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
 import Welcome from "./pages/Welcome";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
@@ -11,6 +10,7 @@ import Roadmap from "./pages/Roadmap";
 import Progress from "./pages/Progress";
 import JobReady from "./pages/JobReady";
 import Profile from "./pages/Profile";
+import Jobs from "./pages/Jobs";
 
 function App() {
   return (
@@ -28,6 +28,7 @@ function App() {
         <Route path="/progress" element={<Progress />} />
         <Route path="/jobready" element={<JobReady />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/jobs" element={<Jobs />} />
       </Routes>
     </Router>
   );

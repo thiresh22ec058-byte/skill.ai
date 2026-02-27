@@ -1,9 +1,9 @@
-const User = require("../models/User");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+import User from "../models/User.js";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 // Register
-exports.registerUser = async (req, res) => {
+const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
@@ -18,14 +18,13 @@ exports.registerUser = async (req, res) => {
     await user.save();
 
     res.status(201).json({ message: "User Registered Successfully" });
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
 // Login
-exports.loginUser = async (req, res) => {
+const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -49,14 +48,13 @@ exports.loginUser = async (req, res) => {
       message: "Login successful",
       token
     });
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
 // Profile
-exports.getProfile = async (req, res) => {
+const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
 
@@ -65,14 +63,13 @@ exports.getProfile = async (req, res) => {
     }
 
     res.json(user);
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
 // Update Skills
-exports.updateSkills = async (req, res) => {
+const updateSkills = async (req, res) => {
   try {
     const { skills } = req.body;
 
@@ -83,8 +80,14 @@ exports.updateSkills = async (req, res) => {
     ).select("-password");
 
     res.json(user);
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+};
+
+export default {
+  registerUser,
+  loginUser,
+  getProfile,
+  updateSkills
 };

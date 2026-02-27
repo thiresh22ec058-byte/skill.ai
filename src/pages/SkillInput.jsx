@@ -31,33 +31,54 @@ function SkillInput() {
   };
 
   const handleAnalyze = async () => {
-    try {
-      setLoading(true);
+  try {
+    setLoading(true);
 
-      const analyzeResponse = await axios.post(
-        "http://localhost:5000/api/analyze",
-        {
-          skills: skills.join(", "),
-          goal: careerGoal,
-        }
-      );
+    // 1️⃣ Get token from localStorage
+    const token = localStorage.getItem("token");
 
-      navigate("/summary", {
-        state: {
-          userType,
-          careerGoal,
-          skills,
-          analysis: analyzeResponse.data,
-        },
-      });
-
-    } catch (error) {
-      console.error("Analyze Error:", error);
-      alert("Failed to analyze skills");
-    } finally {
-      setLoading(false);
+    if (!token) {
+      alert("Please login again");
+      return;
     }
-  };
+
+    // 2️⃣ Save skills to MongoDB
+    await axios.put(
+      "http://localhost:5000/api/users/skills",
+      { skills },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    // 3️⃣ Decode token to get userId
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const userId = payload.id;
+
+    // 4️⃣ Call analyze
+    const analyzeResponse = await axios.post(
+      "http://localhost:5000/api/analyze",
+      {
+        goal: careerGoal,
+        userId
+      }
+    );
+
+    navigate("/summary", {
+      state: {
+        analysis: analyzeResponse.data
+      }
+    });
+
+  } catch (error) {
+    console.error("Analyze Error:", error);
+    alert("Failed to analyze skills");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="page-container">
