@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import { useNavigate } from "react-router-dom";
 
 function Roadmap() {
-  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
-
   const token = localStorage.getItem("token");
+  const navigate = useNavigate();
 
   const fetchProfile = async () => {
     try {
@@ -19,10 +18,9 @@ function Roadmap() {
           }
         }
       );
-
       setProfile(res.data);
     } catch (err) {
-      console.error("Fetch Roadmap Error:", err);
+      console.error("Roadmap Fetch Error:", err);
     }
   };
 
@@ -30,7 +28,7 @@ function Roadmap() {
     fetchProfile();
   }, []);
 
-  const toggleComplete = async (index) => {
+  const markComplete = async (index) => {
     try {
       await axios.put(
         "http://localhost:5000/api/profile/update-week",
@@ -42,9 +40,7 @@ function Roadmap() {
         }
       );
 
-      // Reload updated roadmap from backend
-      fetchProfile();
-
+      fetchProfile(); // reload updated data
     } catch (err) {
       console.error("Update Week Error:", err);
     }
@@ -56,80 +52,156 @@ function Roadmap() {
 
   return (
     <>
-      {/* ✅ Navbar on TOP */}
       <Navbar />
 
-      <div className="page-container">
-        <div className="glass-card">
+      <div
+        style={{
+          minHeight: "100vh",
+          padding: "60px 20px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center"
+        }}
+      >
+        <h1
+          style={{
+            fontSize: "38px",
+            marginBottom: "10px",
+            textAlign: "center"
+          }}
+        >
+          Learning Roadmap
+        </h1>
 
-          <h2 className="hero-title">
-            Your Learning Roadmap
-          </h2>
+        <p
+          style={{
+            marginBottom: "30px",
+            color: "#facc15",
+            textAlign: "center"
+          }}
+        >
+          Complete at least 60% of your roadmap to unlock job recommendations.
+        </p>
 
-          {/* ✅ Use roadmapProgress (correct key) */}
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "800px"
+          }}
+        >
           {profile.roadmapProgress?.map((week, index) => (
             <div
               key={index}
-              className="analysis-box"
-              style={{ marginTop: "20px" }}
+              style={{
+                background: "linear-gradient(135deg,#111827,#1f2937)",
+                padding: "25px",
+                borderRadius: "14px",
+                marginBottom: "25px"
+              }}
             >
-              <h3>{week.week}</h3>
+              <h3 style={{ marginBottom: "8px" }}>
+                {week.week}
+              </h3>
 
-              <ul style={{ marginLeft: "15px" }}>
-                {week.topics?.map((topic, i) => (
-                  <li key={i}>{topic}</li>
-                ))}
-              </ul>
+              <p style={{ marginBottom: "6px" }}>
+                {week.topics[0]}
+              </p>
 
-              <p>Status: {week.status}</p>
+              <p style={{ marginBottom: "12px" }}>
+                Status:{" "}
+                <strong
+                  style={{
+                    color:
+                      week.status === "completed"
+                        ? "#22c55e"
+                        : week.status === "in-progress"
+                        ? "#facc15"
+                        : "#9ca3af"
+                  }}
+                >
+                  {week.status}
+                </strong>
+              </p>
 
-              {/* 🔥 If you later store videoId in DB you can use it here */}
-              {/* For now just show learning button */}
-              <a
-                href={`https://www.youtube.com/results?search_query=${week.topics?.[0]}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  color: "#4fa3ff",
-                  display: "inline-block",
-                  marginTop: "10px"
-                }}
-              >
-                ▶ Start Learning
-              </a>
+              {profile.playlistId && (
+                <a
+                  href={`https://www.youtube.com/playlist?list=${profile.playlistId}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    display: "inline-block",
+                    marginRight: "15px",
+                    color: "#3b82f6",
+                    fontWeight: "500"
+                  }}
+                >
+                  ▶ Start Learning
+                </a>
+              )}
 
               {week.status !== "completed" && (
-                <div>
-                  <button
-                    style={{ marginTop: "10px" }}
-                    onClick={() => toggleComplete(index)}
-                  >
-                    Mark Week Complete
-                  </button>
-                </div>
+                <button
+                  onClick={() => markComplete(index)}
+                  style={{
+                    padding: "8px 14px",
+                    background: "#2563eb",
+                    border: "none",
+                    borderRadius: "8px",
+                    color: "white",
+                    cursor: "pointer"
+                  }}
+                >
+                  Mark Complete
+                </button>
               )}
             </div>
           ))}
 
-          {/* ✅ Progress Section */}
-          <h3 style={{ marginTop: "30px" }}>
-            Progress: {progress}%
-          </h3>
+          {/* Progress Section */}
+          <div
+            style={{
+              marginTop: "30px",
+              textAlign: "center"
+            }}
+          >
+            <h3>Progress: {progress}%</h3>
 
-          <p style={{ color: "#facc15", marginTop: "5px" }}>
-            Complete at least 60% of your roadmap to unlock job recommendations.
-          </p>
-
-          {progress >= 60 && (
-            <button
-              className="primary-btn"
-              style={{ marginTop: "20px" }}
-              onClick={() => navigate("/jobs")}
+            <div
+              style={{
+                height: "10px",
+                background: "#374151",
+                borderRadius: "10px",
+                marginTop: "8px",
+                overflow: "hidden"
+              }}
             >
-              View Recommended Jobs →
-            </button>
-          )}
+              <div
+                style={{
+                  width: `${progress}%`,
+                  height: "100%",
+                  background:
+                    "linear-gradient(90deg,#4f46e5,#22d3ee)"
+                }}
+              />
+            </div>
 
+            {progress >= 60 && (
+              <button
+                onClick={() => navigate("/jobs")}
+                style={{
+                  marginTop: "20px",
+                  padding: "10px 20px",
+                  background: "#16a34a",
+                  border: "none",
+                  borderRadius: "8px",
+                  color: "white",
+                  cursor: "pointer"
+                }}
+              >
+                View Job Recommendations →
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </>

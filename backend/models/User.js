@@ -12,10 +12,16 @@ const roadmapSchema = new mongoose.Schema({
 
 const projectSchema = new mongoose.Schema({
   title: String,
+  type: {
+    type: String,
+    enum: ["software", "hardware"],
+    default: "software"
+  },
   link: String,
+  file: String, // base64 for hardware uploads
   completed: {
     type: Boolean,
-    default: false
+    default: true
   }
 });
 
@@ -24,16 +30,22 @@ const userSchema = new mongoose.Schema({
   email: String,
   password: String,
 
+  role: {
+    type: String,
+    default: "Student"
+  },
+
+  profilePhoto: {
+    type: String,
+    default: ""
+  },
+
   skills: [String],
 
   careerGoal: String,
-  stream: String,
-  year: String,
 
   roadmapProgress: [roadmapSchema],
   projects: [projectSchema]
 });
 
-const User = mongoose.model("User", userSchema);
-
-export default User;
+export default mongoose.model("User", userSchema);

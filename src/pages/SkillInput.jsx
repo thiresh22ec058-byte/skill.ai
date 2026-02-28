@@ -6,79 +6,83 @@ function SkillInput() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { userType, careerGoal } = location.state || {};
+  const { careerGoal } = location.state || {};
 
   const [skillInput, setSkillInput] = useState("");
   const [skills, setSkills] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  /* ================= REDIRECT IF NO GOAL ================= */
   useEffect(() => {
-  if (!careerGoal) {
-    navigate("/");
-  }
-}, [careerGoal, navigate]);
+    if (!careerGoal) {
+      navigate("/");
+    }
+  }, [careerGoal, navigate]);
 
+  /* ================= ADD SKILL ================= */
   const addSkill = () => {
     const trimmed = skillInput.trim();
-    if (trimmed !== "" && !skills.includes(trimmed)) {
+    if (trimmed && !skills.includes(trimmed)) {
       setSkills([...skills, trimmed]);
       setSkillInput("");
     }
   };
 
+  /* ================= REMOVE SKILL ================= */
   const removeSkill = (skill) => {
     setSkills(skills.filter((s) => s !== skill));
   };
 
+  /* ================= HANDLE ANALYZE ================= */
   const handleAnalyze = async () => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    // 1️⃣ Get token from localStorage
-    const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token");
 
-    if (!token) {
-      alert("Please login again");
-      return;
-    }
+      if (!token) {
+        alert("Please login again");
+        navigate("/login");
+        return;
+      }
 
-    // 2️⃣ Save skills to MongoDB
-    await axios.put(
-      "http://localhost:5000/api/users/skills",
-      { skills },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
+      // 1️⃣ Save skills
+      await axios.put(
+        "http://localhost:5000/api/users/skills",
+        { skills },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
-      }
-    );
+      );
 
-    // 3️⃣ Decode token to get userId
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    const userId = payload.id;
+      // 2️⃣ Decode token to get userId
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const userId = payload.id;
 
-    // 4️⃣ Call analyze
-    const analyzeResponse = await axios.post(
-      "http://localhost:5000/api/analyze",
-      {
-        goal: careerGoal,
-        userId
-      }
-    );
+      // 3️⃣ Analyze
+      const analyzeResponse = await axios.post(
+        "http://localhost:5000/api/analyze",
+        {
+          goal: careerGoal,
+          userId
+        }
+      );
 
-    navigate("/summary", {
-      state: {
-        analysis: analyzeResponse.data
-      }
-    });
+      navigate("/summary", {
+        state: {
+          analysis: analyzeResponse.data
+        }
+      });
 
-  } catch (error) {
-    console.error("Analyze Error:", error);
-    alert("Failed to analyze skills");
-  } finally {
-    setLoading(false);
-  }
-};
+    } catch (error) {
+      console.error("Analyze Error:", error);
+      alert("Failed to analyze skills");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="page-container">
@@ -91,6 +95,7 @@ function SkillInput() {
           Tell us what you already know. AI will analyze your strengths.
         </p>
 
+        {/* Skill Input */}
         <div className="skill-input-wrapper">
           <input
             type="text"
@@ -105,6 +110,7 @@ function SkillInput() {
           </button>
         </div>
 
+        {/* Skill Chips */}
         <div className="skill-chips">
           {skills.map((skill) => (
             <div key={skill} className="chip">
@@ -114,6 +120,7 @@ function SkillInput() {
           ))}
         </div>
 
+        {/* Analyze Button */}
         <button
           className="primary-btn"
           disabled={skills.length === 0 || loading}

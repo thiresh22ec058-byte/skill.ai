@@ -3,26 +3,32 @@ import axios from "axios";
 import Navbar from "../components/Navbar";
 
 function Profile() {
-  const [profile, setProfile] = useState(null);
-  const [newProject, setNewProject] = useState({
-    title: "",
-    link: ""
-  });
-
   const token = localStorage.getItem("token");
 
+  const [profile, setProfile] = useState(null);
+  const [editMode, setEditMode] = useState(false);
+
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("");
+  const [profilePhoto, setProfilePhoto] = useState("");
+
+  const [newTitle, setNewTitle] = useState("");
+  const [newLink, setNewLink] = useState("");
+  const [projectType, setProjectType] = useState("software");
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  /* ================= FETCH PROFILE ================= */
   const fetchProfile = async () => {
     try {
       const res = await axios.get(
         "http://localhost:5000/api/profile",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       setProfile(res.data);
+      setName(res.data.name || "");
+      setRole(res.data.role || "");
+      setProfilePhoto(res.data.profilePhoto || "");
     } catch (err) {
       console.error("Profile Fetch Error:", err);
     }
@@ -32,201 +38,364 @@ function Profile() {
     fetchProfile();
   }, []);
 
-  const markWeekComplete = async (index) => {
+  /* ================= PROFILE IMAGE UPLOAD ================= */
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      setProfilePhoto(reader.result);
+    };
+
+    if (file) reader.readAsDataURL(file);
+  };
+
+  /* ================= SAVE PROFILE ================= */
+  const saveProfile = async () => {
     try {
       await axios.put(
-        "http://localhost:5000/api/profile/update-week",
-        { weekIndex: index },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        "http://localhost:5000/api/profile/update-profile",
+        { name, role, profilePhoto },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      setEditMode(false);
       fetchProfile();
     } catch (err) {
-      console.error("Week Update Error:", err);
+      console.error("Save Profile Error:", err);
     }
   };
 
+
+  /* ================= PROJECT FILE UPLOAD ================= */
+const handleProjectFile = (e) => {
+  setSelectedFile(e.target.files[0]);
+};
+
+  /* ================= ADD PROJECT ================= */
   const addProject = async () => {
-    if (!newProject.title || !newProject.link) {
-      alert("Please fill all fields");
-      return;
-    }
+  if (!newTitle) return;
 
+  const formData = new FormData();
+  formData.append("title", newTitle);
+  formData.append("type", projectType);
+
+  if (projectType === "software") {
+    formData.append("link", newLink);
+  } else {
+    formData.append("file", selectedFile);
+  }
+
+  await axios.post(
+    "http://localhost:5000/api/profile/add-project",
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data"
+      }
+    }
+  );
+
+  setNewTitle("");
+  setNewLink("");
+  setSelectedFile(null);
+  fetchProfile();
+};
+
+  /* ================= DELETE PROJECT ================= */
+  const deleteProject = async (index) => {
     try {
-      await axios.post(
-        "http://localhost:5000/api/profile/add-project",
-        newProject,
+      await axios.delete(
+        `http://localhost:5000/api/profile/delete-project/${index}`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         }
       );
 
-      setNewProject({ title: "", link: "" });
       fetchProfile();
     } catch (err) {
-      console.error("Add Project Error:", err);
+      console.error("Delete Project Error:", err);
     }
   };
 
-  if (!profile) return null;
-
-  const progress = profile.stats.progressPercent;
-  const readiness = profile.stats.jobReadinessPercent;
+ if (!profile) return <div>Loading...</div>;
 
   return (
     <>
       <Navbar />
 
-      <div className="page-container">
-        <div className="glass-card">
+      <div
+        style={{
+          minHeight: "100vh",
+          padding: "60px 20px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center"
+        }}
+      >
+        {/* ================= PROFILE CARD ================= */}
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "900px",
+            background: "linear-gradient(135deg,#111827,#1f2937)",
+            padding: "30px",
+            borderRadius: "18px",
+            marginBottom: "30px"
+          }}
+        >
+          <div style={{ display: "flex", gap: "30px" }}>
+            <div>
+              <img
+                src={profilePhoto || "https://via.placeholder.com/140"}
+                alt="profile"
+                style={{
+                  width: "140px",
+                  height: "140px",
+                  borderRadius: "50%",
+                  objectFit: "cover"
+                }}
+              />
 
-          {/* HEADER */}
-          <h2 className="hero-title">{profile.name}</h2>
-          <p style={{ opacity: 0.7 }}>
-            {profile.year} • {profile.stream}
-          </p>
-
-          {/* CAREER GOAL */}
-          <div className="analysis-box" style={{ marginTop: "20px" }}>
-            <h3>Career Goal</h3>
-            <p>{profile.careerGoal}</p>
-          </div>
-
-          {/* OVERVIEW */}
-          <div className="analysis-box" style={{ marginTop: "20px" }}>
-            <h3>Learning Overview</h3>
-
-            <p>Learning Progress: {progress}%</p>
-            <div style={barStyle}>
-              <div style={{ ...fillStyle, width: `${progress}%` }} />
+              {editMode && (
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{ marginTop: "10px" }}
+                />
+              )}
             </div>
 
-            <p style={{ marginTop: "10px" }}>
-              Job Readiness: {readiness}%
-            </p>
-            <div style={barStyle}>
-              <div style={{ ...fillStyle, width: `${readiness}%` }} />
-            </div>
-          </div>
+            <div style={{ flex: 1 }}>
+              {editMode ? (
+                <>
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    style={{
+                      fontSize: "24px",
+                      marginBottom: "10px",
+                      width: "100%"
+                    }}
+                  />
 
-          {/* STUDY PLAN */}
-          <div className="analysis-box" style={{ marginTop: "20px" }}>
-            <h3>What I Should Study</h3>
-
-            {profile.roadmapProgress?.map((week, i) => (
-              <div key={i} style={{ marginBottom: "15px" }}>
-                <strong>{week.week}</strong>
-
-                <ul>
-                  {week.topics.map((topic, idx) => (
-                    <li key={idx}>{topic}</li>
-                  ))}
-                </ul>
-
-                <p>Status: {week.status}</p>
-
-                <a
-                  href={`https://www.youtube.com/results?search_query=${week.topics[0]}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "#4fa3ff" }}
-                >
-                  ▶ Start Learning
-                </a>
-
-                {week.status !== "completed" && (
-                  <div>
-                    <button
-                      style={{ marginTop: "5px" }}
-                      onClick={() => markWeekComplete(i)}
-                    >
-                      Mark Complete
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* PROJECTS */}
-          <div className="analysis-box" style={{ marginTop: "20px" }}>
-            <h3>My Projects</h3>
-
-            {profile.projects?.length > 0 ? (
-              profile.projects.map((p, i) => (
-                <div key={i}>
-                  <a
-                    href={p.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: "#4fa3ff" }}
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    style={{
+                      padding: "6px",
+                      marginBottom: "15px"
+                    }}
                   >
-                    {p.title}
-                  </a>
-                </div>
-              ))
+                    <option>Student</option>
+                    <option>Fresher</option>
+                    <option>Working Professional</option>
+                  </select>
+
+                  <button
+                    onClick={saveProfile}
+                    style={{
+                      padding: "8px 18px",
+                      background: "#16a34a",
+                      border: "none",
+                      borderRadius: "8px",
+                      color: "white",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Save Changes
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h2>{profile.name}</h2>
+                  <p style={{ color: "#9ca3af" }}>{profile.role}</p>
+                  <p style={{ color: "#facc15" }}>{profile.careerGoal}</p>
+
+                  <button
+                    onClick={() => setEditMode(true)}
+                    style={{
+                      marginTop: "10px",
+                      padding: "6px 14px",
+                      background: "#2563eb",
+                      border: "none",
+                      borderRadius: "8px",
+                      color: "white",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Edit Profile
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ================= ROADMAP ================= */}
+        {/* ================= ROADMAP ================= */}
+<div
+  style={{
+    width: "100%",
+    maxWidth: "900px",
+    background: "linear-gradient(135deg,#111827,#1f2937)",
+    padding: "25px",
+    borderRadius: "18px",
+    marginBottom: "30px"
+  }}
+>
+  <h3>Learning Roadmap</h3>
+
+  {profile.roadmapProgress?.length === 0 && (
+    <p style={{ color: "#9ca3af" }}>No roadmap yet</p>
+  )}
+
+  {profile.roadmapProgress?.map((week, index) => (
+    <div key={index} style={{ marginTop: "8px" }}>
+      <strong>{week.week}</strong> — {week.topics?.[0]} ({week.status})
+    </div>
+  ))}
+</div>
+
+        {/* ================= PROJECT SECTION ================= */}
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "900px",
+            background: "linear-gradient(135deg,#111827,#1f2937)",
+            padding: "25px",
+            borderRadius: "18px"
+          }}
+        >
+          <h3>My Projects</h3>
+
+          {profile.projects?.map((p, i) => (
+  <div
+    key={i}
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginTop: "10px",
+      padding: "10px",
+      background: "#1f2937",
+      borderRadius: "8px"
+    }}
+  >
+    <span>{p.title}</span>
+
+    <div style={{ display: "flex", gap: "10px" }}>
+
+      {/* Show View if link exists */}
+      {p.link && (
+        <a
+          href={p.link}
+          target="_blank"
+          rel="noreferrer"
+          style={{ color: "#3b82f6" }}
+        >
+          View
+        </a>
+      )}
+
+      {/* Show View File if file exists */}
+      {p.file && (
+        <a
+          href={`http://localhost:5000${p.file}`}
+          target="_blank"
+          rel="noreferrer"
+          style={{ color: "#3b82f6" }}
+        >
+          View File
+        </a>
+      )}
+
+      <button
+        onClick={() => deleteProject(i)}
+        style={{
+          background: "#dc2626",
+          border: "none",
+          padding: "5px 10px",
+          borderRadius: "6px",
+          color: "white",
+          cursor: "pointer"
+        }}
+      >
+        Delete
+      </button>
+    </div>
+  </div>
+))}
+
+          {/* Add Project Form */}
+          <div style={{ marginTop: "20px" }}>
+            <input
+              placeholder="Project Title"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                marginBottom: "10px",
+                borderRadius: "6px"
+              }}
+            />
+
+            <select
+              value={projectType}
+              onChange={(e) => setProjectType(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                marginBottom: "10px",
+                borderRadius: "6px"
+              }}
+            >
+              <option value="software">Software Project</option>
+              <option value="hardware">Hardware Project</option>
+            </select>
+
+            {projectType === "software" ? (
+              <input
+                placeholder="Project Link"
+                value={newLink}
+                onChange={(e) => setNewLink(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  marginBottom: "10px",
+                  borderRadius: "6px"
+                }}
+              />
             ) : (
-              <p>No projects added yet</p>
+              <input
+                type="file"
+                accept=".pdf,.ppt,.pptx,.jpg,.png,.mp4"
+                onChange={handleProjectFile}
+                style={{ marginBottom: "10px" }}
+              />
             )}
 
-            <div style={{ marginTop: "15px" }}>
-              <input
-                type="text"
-                placeholder="Project Title"
-                value={newProject.title}
-                onChange={(e) =>
-                  setNewProject({
-                    ...newProject,
-                    title: e.target.value
-                  })
-                }
-                style={{ marginRight: "8px" }}
-              />
-
-              <input
-                type="text"
-                placeholder="Project Link"
-                value={newProject.link}
-                onChange={(e) =>
-                  setNewProject({
-                    ...newProject,
-                    link: e.target.value
-                  })
-                }
-                style={{ marginRight: "8px" }}
-              />
-
-              <button onClick={addProject}>
-                + Add Project
-              </button>
-            </div>
+            <button
+              onClick={addProject}
+              style={{
+                background: "#16a34a",
+                border: "none",
+                padding: "8px 14px",
+                borderRadius: "6px",
+                color: "white",
+                cursor: "pointer"
+              }}
+            >
+              Add Project
+            </button>
           </div>
-
         </div>
       </div>
     </>
   );
 }
-
-const barStyle = {
-  height: "8px",
-  width: "100%",
-  background: "rgba(255,255,255,0.1)",
-  borderRadius: "8px",
-  marginTop: "5px",
-  overflow: "hidden"
-};
-
-const fillStyle = {
-  height: "100%",
-  background: "linear-gradient(90deg,#4f46e5,#22d3ee)",
-  transition: "0.5s"
-};
 
 export default Profile;

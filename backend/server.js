@@ -10,19 +10,32 @@ import User from "./models/User.js";
 
 import userRoutes from "./routes/userRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
+import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
 const app = express();
-
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use("/uploads", express.static("uploads"));
+
+/* ================= DATABASE ================= */
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err) => console.log("MongoDB Error:", err));
 
 /* ================= ROUTES ================= */
+app.use("/api/users", userRoutes);
+app.use("/api/profile", profileRoutes);
 
+/* ================= JOBS API ================= */
 app.get("/api/jobs", async (req, res) => {
   try {
-    const { readiness, domain } = req.query;
+    const readiness = Number(req.query.readiness);
+    const domain = req.query.domain || "Professional";
 
     let jobs = [];
 
@@ -48,104 +61,29 @@ app.get("/api/jobs", async (req, res) => {
     }
 
     res.json(jobs);
-
   } catch (err) {
     res.status(500).json({ message: "Server Error" });
   }
 });
 
-/* ================= DATABASE ================= */
-
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
-  .catch((err) => console.log("MongoDB Error:", err));
-
-/* ================= HELPER FUNCTIONS ================= */
-
-// Convert ISO duration to minutes
-function convertISOToMinutes(iso) {
-  const match = iso.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
-
-  const hours = match[1] ? parseInt(match[1]) : 0;
-  const minutes = match[2] ? parseInt(match[2]) : 0;
-  const seconds = match[3] ? parseInt(match[3]) : 0;
-
-  return hours * 60 + minutes + seconds / 60;
-}
-
-// Split videos into 5-hour weekly groups
-function splitIntoWeeks(videos) {
-  const WEEK_LIMIT = 300;
-  let roadmap = [];
-  let currentWeek = [];
-  let total = 0;
-  let weekNumber = 1;
-
-  for (let video of videos) {
-    const duration = convertISOToMinutes(video.duration);
-
-    if (total + duration <= WEEK_LIMIT) {
-      currentWeek.push({
-        title: video.title,
-        videoId: video.videoId,
-        duration
-      });
-      total += duration;
-    } else {
-      roadmap.push({
-        week: weekNumber,
-        totalDuration: Math.round(total),
-        videos: currentWeek
-      });
-
-      weekNumber++;
-      currentWeek = [{
-        title: video.title,
-        videoId: video.videoId,
-        duration
-      }];
-      total = duration;
-    }
-  }
-
-  if (currentWeek.length > 0) {
-    roadmap.push({
-      week: weekNumber,
-      totalDuration: Math.round(total),
-      videos: currentWeek
-    });
-  }
-
-  return roadmap;
-}
-
 /* ================= ANALYZE ROUTE ================= */
-
 app.post("/api/analyze", async (req, res) => {
   try {
     const { goal, userId } = req.body;
 
     if (!goal || !userId) {
       return res.status(400).json({
-        message: "Goal and User ID required"
+        message: "Goal and userId required"
       });
     }
 
-    // Get user
     const user = await User.findById(userId);
+    if (!user)
+      return res.status(404).json({ message: "User not found" });
 
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found"
-      });
-    }
-
-    const userSkills = user.skills || [];
-
-    // Detect domain
     const domain = normalizeGoal(goal);
     const requiredSkills = domainSkills[domain] || [];
+    const userSkills = user.skills || [];
 
     const lowerUserSkills = userSkills.map((s) =>
       s.toLowerCase()
@@ -153,44 +91,36 @@ app.post("/api/analyze", async (req, res) => {
 
     const matchedSkills = [];
     const skillsMissing = [];
-    const skillsImprove = [];
 
     requiredSkills.forEach((skill) => {
-      const match = lowerUserSkills.some(
-        (userSkill) =>
-          userSkill.includes(skill.toLowerCase()) ||
-          skill.toLowerCase().includes(userSkill)
+      const match = lowerUserSkills.some((u) =>
+        u.includes(skill.toLowerCase())
       );
-
-      if (match) {
-        matchedSkills.push(skill);
-      } else {
-        skillsMissing.push(skill);
-      }
+      if (match) matchedSkills.push(skill);
+      else skillsMissing.push(skill);
     });
 
-    matchedSkills.forEach((skill) => {
-      skillsImprove.push(`Improve ${skill}`);
-    });
-
-    /* ===== PLAYLIST CACHING ===== */
+    /* ================= PLAYLIST CACHE ================= */
 
     let cached = await PlaylistCache.findOne({ goal });
     let roadmap;
+    let playlistId;
 
     if (cached && cached.roadmap?.length > 0) {
       roadmap = cached.roadmap;
+      playlistId = cached.playlistId;
     } else {
 
-      // Search Playlist
+      /* 🔥 ENGLISH PRIORITY SEARCH */
       const searchResponse = await axios.get(
         "https://www.googleapis.com/youtube/v3/search",
         {
           params: {
             part: "snippet",
-            q: `${goal} complete course playlist beginner to advanced`,
+            q: `${goal} full complete course playlist English`,
             type: "playlist",
             maxResults: 1,
+            relevanceLanguage: "en",
             key: process.env.YOUTUBE_API_KEY
           }
         }
@@ -202,92 +132,67 @@ app.post("/api/analyze", async (req, res) => {
         });
       }
 
-      const playlistId =
+      playlistId =
         searchResponse.data.items[0].id.playlistId;
 
-      // Get playlist videos
+      /* GET PLAYLIST VIDEOS */
       const playlistItems = await axios.get(
         "https://www.googleapis.com/youtube/v3/playlistItems",
         {
           params: {
             part: "snippet,contentDetails",
             playlistId,
-            maxResults: 50,
+            maxResults: 20,
             key: process.env.YOUTUBE_API_KEY
           }
         }
       );
 
-      const videoIds =
-        playlistItems.data.items.map(
-          (item) => item.contentDetails.videoId
-        );
-
-      // Get durations
-      const videosResponse = await axios.get(
-        "https://www.googleapis.com/youtube/v3/videos",
-        {
-          params: {
-            part: "contentDetails",
-            id: videoIds.join(","),
-            key: process.env.YOUTUBE_API_KEY
-          }
-        }
+      roadmap = playlistItems.data.items.map(
+        (item, index) => ({
+          week: index + 1,
+          videos: [
+            {
+              title: item.snippet.title,
+              videoId:
+                item.contentDetails.videoId
+            }
+          ]
+        })
       );
 
-      const durationMap = {};
-      videosResponse.data.items.forEach((video) => {
-        durationMap[video.id] =
-          video.contentDetails.duration;
-      });
-
-      const videos =
-        playlistItems.data.items.map((item) => ({
-          title: item.snippet.title,
-          videoId: item.contentDetails.videoId,
-          duration:
-            durationMap[item.contentDetails.videoId] ||
-            "PT0M"
-        }));
-
-      roadmap = splitIntoWeeks(videos);
-
+      /* ✅ SAVE WITH PLAYLIST ID */
       await PlaylistCache.findOneAndUpdate(
         { goal },
-        { goal, roadmap },
+        {
+          goal,
+          playlistId,
+          roadmap
+        },
         { upsert: true }
       );
     }
 
-    /* ===== SAVE CAREER GOAL + INITIAL ROADMAP IN USER ===== */
+    /* ================= USER ROADMAP ================= */
 
     user.careerGoal = goal;
 
-  user.roadmapProgress = skillsMissing.map((skill, index) => ({
-  week: `${index * 2 + 1}-${index * 2 + 2}`,
-  topics: [skill],
-  status: index === 0 ? "in-progress" : "locked"
-}));
+    user.roadmapProgress = skillsMissing.map(
+      (skill, index) => ({
+        week: `Week ${index + 1}`,
+        topics: [skill],
+        status:
+          index === 0 ? "in-progress" : "locked"
+      })
+    );
 
     await user.save();
 
-    /* ===== RESPONSE ===== */
-
     res.json({
       career: goal,
-      domain,
-      skillsHave: userSkills,
       skillsMissing,
-      skillsImprove,
-      roadmap,
-      progress:
-        requiredSkills.length > 0
-          ? Math.round(
-              (matchedSkills.length /
-                requiredSkills.length) *
-                100
-            )
-          : 0
+      playlistId,
+      roadmap
     });
 
   } catch (error) {
@@ -299,9 +204,8 @@ app.post("/api/analyze", async (req, res) => {
 });
 
 /* ================= START SERVER ================= */
-
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () =>
+  console.log(`Server running on port ${PORT}`)
+);

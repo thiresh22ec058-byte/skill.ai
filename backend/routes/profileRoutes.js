@@ -2,76 +2,49 @@ import express from "express";
 import User from "../models/User.js";
 import PlaylistCache from "../models/PlaylistCache.js";
 import authMiddleware from "../middleware/authMiddleware.js";
+import multer from "multer";
+import path from "path";
 
 const router = express.Router();
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    cb(
+      null,
+      Date.now() + "-" + file.originalname
+    );
+  }
+});
+
+const upload = multer({ storage });
 
 /* ================= GET PROFILE ================= */
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password").lean();
+    const user = await User.findById(req.user.id).lean();
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Attach playlist videos
-    const cached = await PlaylistCache.findOne({
-      goal: user.careerGoal
-    });
-
-    let roadmapWithVideos = [];
-
-if (user.roadmapProgress?.length > 0) {
-  roadmapWithVideos = user.roadmapProgress.map((week, index) => ({
-    ...week,
-    videos: cached?.roadmap?.[index]?.videos || []
-  }));
-}
-
-    const totalWeeks = roadmapWithVideos.length;
-    const completedWeeks = roadmapWithVideos.filter(
-      w => w.status === "completed"
-    ).length;
-
-    const progressPercent =
-      totalWeeks > 0
-        ? Math.round((completedWeeks / totalWeeks) * 100)
-        : 0;
-
-    const totalProjects = user.projects?.length || 0;
-    const completedProjects =
-      user.projects?.filter(p => p.completed).length || 0;
-
-    const jobReadinessPercent = Math.min(
-      100,
-      Math.round(
-        progressPercent * 0.7 +
-        (totalProjects > 0
-          ? (completedProjects / totalProjects) * 30
-          : 0)
-      )
-    );
-
     res.json({
       id: user._id,
-      name: user.name,
-      stream: user.stream,
-      year: user.year,
-      careerGoal: user.careerGoal,
-      roadmap: roadmapWithVideos,
+      name: user.name || "",
+      role: user.role || "",
+      profilePhoto: user.profilePhoto || "",
+      careerGoal: user.careerGoal || "",
+      roadmapProgress: user.roadmapProgress || [],
       projects: user.projects || [],
       stats: {
-        progressPercent,
-        completedWeeks,
-        totalWeeks,
-        completedProjects,
-        totalProjects,
-        jobReadinessPercent
+        progressPercent: 0,
+        jobReadinessPercent: 0
       }
     });
 
   } catch (err) {
-    console.error("Profile Error:", err);
+    console.log(err);
     res.status(500).json({ message: "Server Error" });
   }
 });
@@ -83,43 +56,95 @@ router.put("/update-week", authMiddleware, async (req, res) => {
 
     const user = await User.findById(req.user.id);
 
-    if (!user || !user.roadmapProgress) {
+    if (!user)
       return res.status(404).json({ message: "User not found" });
+
+    if (
+      weekIndex === undefined ||
+      !user.roadmapProgress[weekIndex]
+    ) {
+      return res.status(400).json({ message: "Invalid week index" });
     }
 
+    // Mark current week complete
     user.roadmapProgress[weekIndex].status = "completed";
 
+    // Unlock next week
     if (user.roadmapProgress[weekIndex + 1]) {
       user.roadmapProgress[weekIndex + 1].status = "in-progress";
     }
+
+    user.markModified("roadmapProgress"); // 🔥 IMPORTANT FIX
 
     await user.save();
 
     res.json({ message: "Week updated successfully" });
 
   } catch (err) {
+    console.error("Update Week Error:", err);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+/* ================= UPDATE PROFILE ================= */
+router.put("/update-profile", authMiddleware, async (req, res) => {
+  try {
+    const { name, role, profilePhoto } = req.body;
+
+    const user = await User.findById(req.user.id);
+
+    user.name = name;
+    user.role = role;
+    user.profilePhoto = profilePhoto;
+
+    await user.save();
+
+    res.json({ message: "Profile updated" });
+
+  } catch {
     res.status(500).json({ message: "Server Error" });
   }
 });
 
 /* ================= ADD PROJECT ================= */
-router.post("/add-project", authMiddleware, async (req, res) => {
-  try {
-    const { title, link } = req.body;
+router.post(
+  "/add-project",
+  authMiddleware,
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      const { title, type, link } = req.body;
 
+      const user = await User.findById(req.user.id);
+
+      user.projects.push({
+        title,
+        type,
+        link,
+        file: req.file ? `/uploads/${req.file.filename}` : ""
+      });
+
+      await user.save();
+
+      res.json({ message: "Project added" });
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({ message: "Server Error" });
+    }
+  }
+);
+
+/* ================= DELETE PROJECT ================= */
+router.delete("/delete-project/:index", authMiddleware, async (req, res) => {
+  try {
     const user = await User.findById(req.user.id);
 
-    user.projects.push({
-      title,
-      link,
-      completed: false
-    });
-
+    user.projects.splice(req.params.index, 1);
     await user.save();
 
-    res.json(user.projects);
+    res.json({ message: "Project deleted" });
 
-  } catch (err) {
+  } catch {
     res.status(500).json({ message: "Server Error" });
   }
 });

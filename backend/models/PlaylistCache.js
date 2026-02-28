@@ -1,5 +1,3 @@
-// backend/models/PlaylistCache.js
-
 import mongoose from "mongoose";
 
 const videoSchema = new mongoose.Schema({
@@ -16,6 +14,7 @@ const weekSchema = new mongoose.Schema({
 
 const playlistCacheSchema = new mongoose.Schema({
   goal: String,
+  playlistId: String,        // ✅ IMPORTANT
   roadmap: [weekSchema]
 });
 
