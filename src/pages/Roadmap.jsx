@@ -1,36 +1,56 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import { useNavigate } from "react-router-dom";
 
 function Roadmap() {
-  const [roadmap, setRoadmap] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const token = localStorage.getItem("token");
+  const navigate = useNavigate();
 
-  const generateRoadmap = async () => {
-    setLoading(true);
-
+  const fetchProfile = async () => {
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/roadmap/generate-roadmap",
+      const res = await axios.get(
+        "http://localhost:5000/api/profile",
         {
-          goal: "Full Stack Developer",
-          skillLevel: "beginner",
-          currentSkills: ["HTML"],
-          dailyHours: 3
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
-
-      setRoadmap(res.data.roadmap);
+      setProfile(res.data);
     } catch (err) {
-      console.error("Roadmap Generation Error:", err);
+      console.error("Roadmap Fetch Error:", err);
     }
-
-    setLoading(false);
   };
 
   useEffect(() => {
-    generateRoadmap();
-  }, []);
+    if (token) {
+      fetchProfile();
+    }
+  }, [token]);
+
+  const markComplete = async (index) => {
+    try {
+      await axios.put(
+        "http://localhost:5000/api/profile/update-week",
+        { weekIndex: index },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      fetchProfile();
+    } catch (err) {
+      console.error("Update Week Error:", err);
+    }
+  };
+
+  if (!profile) return null;
+
+  const progress = profile?.stats?.progressPercent || 0;
 
   return (
     <>
@@ -42,53 +62,149 @@ function Roadmap() {
           padding: "60px 20px",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center"
+          alignItems: "center",
         }}
       >
-        <h1 style={{ fontSize: "38px", marginBottom: "20px" }}>
-          AI Personalized Roadmap
+        <h1
+          style={{
+            fontSize: "38px",
+            marginBottom: "10px",
+            textAlign: "center",
+          }}
+        >
+          Learning Roadmap
         </h1>
 
-        {loading && <p>Generating AI Roadmap...</p>}
+        <p
+          style={{
+            marginBottom: "30px",
+            color: "#facc15",
+            textAlign: "center",
+          }}
+        >
+          Complete at least 60% of your roadmap to unlock job recommendations.
+        </p>
 
-        {roadmap && (
-          <div style={{ maxWidth: "900px", width: "100%" }}>
-            <h2>{roadmap.title}</h2>
-            <p><strong>Estimated Duration:</strong> {roadmap.estimated_duration}</p>
-            <p style={{ marginBottom: "30px" }}>
-              {roadmap.weekly_plan_overview}
-            </p>
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "800px",
+          }}
+        >
+          {profile?.roadmapProgress?.map((week, index) => (
+            <div
+              key={index}
+              style={{
+                background: "linear-gradient(135deg,#111827,#1f2937)",
+                padding: "25px",
+                borderRadius: "14px",
+                marginBottom: "25px",
+              }}
+            >
+              <h3 style={{ marginBottom: "8px" }}>
+                {week.week}
+              </h3>
 
-            {roadmap.phases.map((phase, index) => (
+              <p style={{ marginBottom: "6px" }}>
+                {week.topics?.[0]}
+              </p>
+
+              {week.playlist && (
+                <a
+                  href={week.playlist}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    display: "inline-block",
+                    marginBottom: "10px",
+                    color: "#3b82f6",
+                    fontWeight: "500",
+                  }}
+                >
+                  ▶ View Playlist
+                </a>
+              )}
+
+              <p style={{ marginBottom: "12px" }}>
+                Status:{" "}
+                <strong
+                  style={{
+                    color:
+                      week.status === "completed"
+                        ? "#22c55e"
+                        : week.status === "in-progress"
+                        ? "#facc15"
+                        : "#9ca3af",
+                  }}
+                >
+                  {week.status}
+                </strong>
+              </p>
+
+              {week.status !== "completed" && (
+                <button
+                  onClick={() => markComplete(index)}
+                  style={{
+                    padding: "8px 14px",
+                    background: "#2563eb",
+                    border: "none",
+                    borderRadius: "8px",
+                    color: "white",
+                    cursor: "pointer",
+                  }}
+                >
+                  Mark Complete
+                </button>
+              )}
+            </div>
+          ))}
+
+          {/* Progress Section */}
+          <div
+            style={{
+              marginTop: "30px",
+              textAlign: "center",
+            }}
+          >
+            <h3>Progress: {progress}%</h3>
+
+            <div
+              style={{
+                height: "10px",
+                background: "#374151",
+                borderRadius: "10px",
+                marginTop: "8px",
+                overflow: "hidden",
+              }}
+            >
               <div
-                key={index}
                 style={{
-                  background: "linear-gradient(135deg,#111827,#1f2937)",
-                  padding: "25px",
-                  borderRadius: "14px",
-                  marginBottom: "25px"
+                  width: `${progress}%`,
+                  height: "100%",
+                  background:
+                    "linear-gradient(90deg,#4f46e5,#22d3ee)",
+                }}
+              />
+            </div>
+
+            {progress >= 60 && (
+              <button
+                onClick={() => navigate("/jobs")}
+                style={{
+                  marginTop: "20px",
+                  padding: "10px 20px",
+                  background: "#16a34a",
+                  border: "none",
+                  borderRadius: "8px",
+                  color: "white",
+                  cursor: "pointer",
                 }}
               >
-                <h3>{phase.phase_name}</h3>
-                <p><strong>Duration:</strong> {phase.duration}</p>
-
-                <p><strong>Topics:</strong></p>
-                <ul>
-                  {phase.topics.map((topic, i) => (
-                    <li key={i}>{topic}</li>
-                  ))}
-                </ul>
-
-                <p><strong>Projects:</strong></p>
-                <ul>
-                  {phase.projects.map((project, i) => (
-                    <li key={i}>{project}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+                View Job Recommendations →
+              </button>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </>
   );
