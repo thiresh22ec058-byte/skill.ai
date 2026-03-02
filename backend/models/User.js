@@ -1,8 +1,15 @@
 import mongoose from "mongoose";
 
+/* ================= ROADMAP SCHEMA ================= */
 const roadmapSchema = new mongoose.Schema({
-  week: String,
-  topics: [String],
+  week: {
+    type: String,
+    required: true
+  },
+  topics: {
+    type: [String],
+    default: []
+  },
   status: {
     type: String,
     enum: ["locked", "in-progress", "completed"],
@@ -10,6 +17,7 @@ const roadmapSchema = new mongoose.Schema({
   }
 });
 
+/* ================= PROJECT SCHEMA ================= */
 const projectSchema = new mongoose.Schema({
   title: String,
   type: {
@@ -18,34 +26,54 @@ const projectSchema = new mongoose.Schema({
     default: "software"
   },
   link: String,
-  file: String, // base64 for hardware uploads
+  file: String, // base64 file (for hardware uploads)
   completed: {
     type: Boolean,
     default: true
   }
 });
 
-const userSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  password: String,
+/* ================= USER SCHEMA ================= */
+const userSchema = new mongoose.Schema(
+  {
+    name: String,
+    email: {
+      type: String,
+      unique: true
+    },
+    password: String,
 
-  role: {
-    type: String,
-    default: "Student"
+    role: {
+      type: String,
+      default: "Student"
+    },
+
+    profilePhoto: {
+      type: String,
+      default: ""
+    },
+
+    skills: {
+      type: [String],
+      default: []
+    },
+
+    careerGoal: {
+      type: String,
+      default: ""
+    },
+
+    roadmapProgress: {
+      type: [roadmapSchema],
+      default: []
+    },
+
+    projects: {
+      type: [projectSchema],
+      default: []
+    }
   },
-
-  profilePhoto: {
-    type: String,
-    default: ""
-  },
-
-  skills: [String],
-
-  careerGoal: String,
-
-  roadmapProgress: [roadmapSchema],
-  projects: [projectSchema]
-});
+  { timestamps: true }
+);
 
 export default mongoose.model("User", userSchema);

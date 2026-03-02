@@ -74,35 +74,49 @@ const handleProjectFile = (e) => {
 
   /* ================= ADD PROJECT ================= */
   const addProject = async () => {
-  if (!newTitle) return;
+  try {
+    if (!newTitle) return;
 
-  const formData = new FormData();
-  formData.append("title", newTitle);
-  formData.append("type", projectType);
-
-  if (projectType === "software") {
-    formData.append("link", newLink);
-  } else {
-    formData.append("file", selectedFile);
-  }
-
-  await axios.post(
-    "http://localhost:5000/api/profile/add-project",
-    formData,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data"
-      }
+    if (projectType === "hardware" && !selectedFile) {
+      alert("Please select a file for hardware project");
+      return;
     }
-  );
 
-  setNewTitle("");
-  setNewLink("");
-  setSelectedFile(null);
-  fetchProfile();
+    const formData = new FormData();
+    formData.append("title", newTitle);
+    formData.append("type", projectType);
+
+    if (projectType === "software") {
+      if (!newLink) {
+        alert("Please enter project link");
+        return;
+      }
+      formData.append("link", newLink);
+    } else {
+      formData.append("file", selectedFile);
+    }
+
+    await axios.post(
+      "http://localhost:5000/api/profile/add-project",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    setNewTitle("");
+    setNewLink("");
+    setSelectedFile(null);
+
+    fetchProfile();
+
+  } catch (err) {
+    console.error("Add Project Error:", err);
+    alert("Failed to add project");
+  }
 };
-
   /* ================= DELETE PROJECT ================= */
   const deleteProject = async (index) => {
     try {

@@ -22,31 +22,39 @@ function SkillInput() {
   /* ================= ADD SKILL ================= */
   const addSkill = () => {
     const trimmed = skillInput.trim();
-    if (trimmed && !skills.includes(trimmed)) {
-      setSkills([...skills, trimmed]);
-      setSkillInput("");
+
+    if (!trimmed) return;
+
+    if (!skills.includes(trimmed)) {
+      setSkills((prev) => [...prev, trimmed]);
     }
+
+    setSkillInput("");
   };
 
   /* ================= REMOVE SKILL ================= */
-  const removeSkill = (skill) => {
-    setSkills(skills.filter((s) => s !== skill));
+  const removeSkill = (skillToRemove) => {
+    setSkills((prev) =>
+      prev.filter((skill) => skill !== skillToRemove)
+    );
   };
 
   /* ================= HANDLE ANALYZE ================= */
   const handleAnalyze = async () => {
+    if (skills.length === 0) return;
+
     try {
       setLoading(true);
 
       const token = localStorage.getItem("token");
 
       if (!token) {
-        alert("Please login again");
+        alert("Session expired. Please login again.");
         navigate("/login");
         return;
       }
 
-      // 1️⃣ Save skills
+      /* 1️⃣ Save Skills to MongoDB */
       await axios.put(
         "http://localhost:5000/api/users/skills",
         { skills },
@@ -57,11 +65,20 @@ function SkillInput() {
         }
       );
 
-      // 2️⃣ Decode token to get userId
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const userId = payload.id;
+      /* 2️⃣ Decode token safely */
+      let userId;
+      try {
+        const payload = JSON.parse(
+          atob(token.split(".")[1])
+        );
+        userId = payload.id;
+      } catch {
+        alert("Invalid session. Please login again.");
+        navigate("/login");
+        return;
+      }
 
-      // 3️⃣ Analyze
+      /* 3️⃣ Call Analyze API */
       const analyzeResponse = await axios.post(
         "http://localhost:5000/api/analyze",
         {
@@ -70,14 +87,17 @@ function SkillInput() {
         }
       );
 
-      navigate("/summary", {
-        state: {
-          analysis: analyzeResponse.data
-        }
-      });
+      /* 4️⃣ Save Analysis to localStorage (IMPORTANT FIX) */
+      localStorage.setItem(
+        "analysis",
+        JSON.stringify(analyzeResponse.data)
+      );
+
+      /* 5️⃣ Navigate to Summary */
+      navigate("/summary");
 
     } catch (error) {
-      console.error("Analyze Error:", error);
+      console.error("Analyze Error:", error.response?.data || error.message);
       alert("Failed to analyze skills");
     } finally {
       setLoading(false);
@@ -103,7 +123,9 @@ function SkillInput() {
             value={skillInput}
             onChange={(e) => setSkillInput(e.target.value)}
             className="ai-input"
-            onKeyDown={(e) => e.key === "Enter" && addSkill()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") addSkill();
+            }}
           />
           <button className="add-btn" onClick={addSkill}>
             Add

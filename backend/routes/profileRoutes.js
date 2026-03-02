@@ -1,20 +1,18 @@
 import express from "express";
 import User from "../models/User.js";
-import PlaylistCache from "../models/PlaylistCache.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import multer from "multer";
 import path from "path";
 
 const router = express.Router();
+
+/* ================= MULTER SETUP ================= */
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads/");
   },
   filename: function (req, file, cb) {
-    cb(
-      null,
-      Date.now() + "-" + file.originalname
-    );
+    cb(null, Date.now() + "-" + file.originalname);
   }
 });
 
@@ -29,6 +27,17 @@ router.get("/", authMiddleware, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    const totalWeeks = user.roadmapProgress?.length || 0;
+    const completedWeeks =
+      user.roadmapProgress?.filter(
+        (w) => w.status === "completed"
+      ).length || 0;
+
+    const progressPercent =
+      totalWeeks > 0
+        ? Math.round((completedWeeks / totalWeeks) * 100)
+        : 0;
+
     res.json({
       id: user._id,
       name: user.name || "",
@@ -38,50 +47,12 @@ router.get("/", authMiddleware, async (req, res) => {
       roadmapProgress: user.roadmapProgress || [],
       projects: user.projects || [],
       stats: {
-        progressPercent: 0,
-        jobReadinessPercent: 0
+        progressPercent
       }
     });
 
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "Server Error" });
-  }
-});
-
-/* ================= UPDATE WEEK ================= */
-router.put("/update-week", authMiddleware, async (req, res) => {
-  try {
-    const { weekIndex } = req.body;
-
-    const user = await User.findById(req.user.id);
-
-    if (!user)
-      return res.status(404).json({ message: "User not found" });
-
-    if (
-      weekIndex === undefined ||
-      !user.roadmapProgress[weekIndex]
-    ) {
-      return res.status(400).json({ message: "Invalid week index" });
-    }
-
-    // Mark current week complete
-    user.roadmapProgress[weekIndex].status = "completed";
-
-    // Unlock next week
-    if (user.roadmapProgress[weekIndex + 1]) {
-      user.roadmapProgress[weekIndex + 1].status = "in-progress";
-    }
-
-    user.markModified("roadmapProgress"); // 🔥 IMPORTANT FIX
-
-    await user.save();
-
-    res.json({ message: "Week updated successfully" });
-
-  } catch (err) {
-    console.error("Update Week Error:", err);
+    console.error("Profile Fetch Error:", err);
     res.status(500).json({ message: "Server Error" });
   }
 });
@@ -93,15 +64,52 @@ router.put("/update-profile", authMiddleware, async (req, res) => {
 
     const user = await User.findById(req.user.id);
 
-    user.name = name;
-    user.role = role;
-    user.profilePhoto = profilePhoto;
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.name = name || user.name;
+    user.role = role || user.role;
+    user.profilePhoto = profilePhoto || user.profilePhoto;
 
     await user.save();
 
-    res.json({ message: "Profile updated" });
+    res.json({ message: "Profile updated successfully" });
 
-  } catch {
+  } catch (error) {
+    console.error("Update Profile Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+/* ================= UPDATE WEEK ================= */
+router.put("/update-week", authMiddleware, async (req, res) => {
+  try {
+    const { weekIndex } = req.body;
+
+    const user = await User.findById(req.user.id);
+
+    if (
+      !user ||
+      weekIndex === undefined ||
+      !user.roadmapProgress ||
+      !user.roadmapProgress[weekIndex]
+    ) {
+      return res.status(400).json({ message: "Invalid week index" });
+    }
+
+    user.roadmapProgress[weekIndex].status = "completed";
+
+    if (user.roadmapProgress[weekIndex + 1]) {
+      user.roadmapProgress[weekIndex + 1].status = "in-progress";
+    }
+
+    await user.save();
+
+    res.json({ message: "Week updated successfully" });
+
+  } catch (error) {
+    console.error("Update Week Error:", error);
     res.status(500).json({ message: "Server Error" });
   }
 });
@@ -115,20 +123,31 @@ router.post(
     try {
       const { title, type, link } = req.body;
 
+      if (!title || !type) {
+        return res.status(400).json({ message: "Missing fields" });
+      }
+
       const user = await User.findById(req.user.id);
 
-      user.projects.push({
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const newProject = {
         title,
         type,
-        link,
+        link: type === "software" ? link : "",
         file: req.file ? `/uploads/${req.file.filename}` : ""
-      });
+      };
+
+      user.projects.push(newProject);
 
       await user.save();
 
-      res.json({ message: "Project added" });
+      res.json({ message: "Project added successfully" });
+
     } catch (err) {
-      console.log(err);
+      console.error("Add Project Error:", err);
       res.status(500).json({ message: "Server Error" });
     }
   }
@@ -137,14 +156,26 @@ router.post(
 /* ================= DELETE PROJECT ================= */
 router.delete("/delete-project/:index", authMiddleware, async (req, res) => {
   try {
+    const index = parseInt(req.params.index);
+
     const user = await User.findById(req.user.id);
 
-    user.projects.splice(req.params.index, 1);
+    if (
+      !user ||
+      isNaN(index) ||
+      index < 0 ||
+      index >= user.projects.length
+    ) {
+      return res.status(400).json({ message: "Invalid index" });
+    }
+
+    user.projects.splice(index, 1);
     await user.save();
 
-    res.json({ message: "Project deleted" });
+    res.json({ message: "Project deleted successfully" });
 
-  } catch {
+  } catch (error) {
+    console.error("Delete Project Error:", error);
     res.status(500).json({ message: "Server Error" });
   }
 });
