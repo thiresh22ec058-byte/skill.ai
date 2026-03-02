@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 
 /* ================= ROADMAP SCHEMA ================= */
+/* ================= ROADMAP SCHEMA ================= */
+
 const roadmapSchema = new mongoose.Schema({
   week: {
     type: String,
@@ -9,6 +11,10 @@ const roadmapSchema = new mongoose.Schema({
   topics: {
     type: [String],
     default: []
+  },
+  playlist: {
+    type: String,
+    default: ""
   },
   status: {
     type: String,

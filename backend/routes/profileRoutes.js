@@ -2,21 +2,37 @@ import express from "express";
 import User from "../models/User.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import multer from "multer";
+import fs from "fs";
 import path from "path";
 
 const router = express.Router();
 
+
 /* ================= MULTER SETUP ================= */
+
+// 🔥 Ensure uploads folder exists
+const uploadPath = path.join(process.cwd(), "uploads");
+
+if (!fs.existsSync(uploadPath)) {
+  fs.mkdirSync(uploadPath, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/");
+    cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + "-" + file.originalname);
   }
 });
 
-const upload = multer({ storage });
+// 🔥 Allow up to 100MB file size
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 100 * 1024 * 1024 // 100MB
+  }
+});
 
 /* ================= GET PROFILE ================= */
 router.get("/", authMiddleware, async (req, res) => {
@@ -133,6 +149,20 @@ router.post(
         return res.status(404).json({ message: "User not found" });
       }
 
+      // 🔥 If hardware, file is required
+      if (type === "hardware" && !req.file) {
+        return res.status(400).json({
+          message: "Hardware project requires a file"
+        });
+      }
+
+      // 🔥 If software, link is required
+      if (type === "software" && !link) {
+        return res.status(400).json({
+          message: "Software project requires a link"
+        });
+      }
+
       const newProject = {
         title,
         type,
@@ -147,6 +177,14 @@ router.post(
       res.json({ message: "Project added successfully" });
 
     } catch (err) {
+
+      // 🔥 Handle large file error (100MB limit)
+      if (err.code === "LIMIT_FILE_SIZE") {
+        return res.status(400).json({
+          message: "File size must be under 100MB"
+        });
+      }
+
       console.error("Add Project Error:", err);
       res.status(500).json({ message: "Server Error" });
     }

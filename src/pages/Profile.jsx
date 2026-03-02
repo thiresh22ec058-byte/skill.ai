@@ -248,8 +248,7 @@ const handleProjectFile = (e) => {
           </div>
         </div>
 
-        {/* ================= ROADMAP ================= */}
-        {/* ================= ROADMAP ================= */}
+        
 <div
   style={{
     width: "100%",
@@ -384,12 +383,19 @@ const handleProjectFile = (e) => {
                 }}
               />
             ) : (
-              <input
-                type="file"
-                accept=".pdf,.ppt,.pptx,.jpg,.png,.mp4"
-                onChange={handleProjectFile}
-                style={{ marginBottom: "10px" }}
-              />
+             <>
+  <input
+    type="file"
+    accept=".pdf,.ppt,.pptx,.jpg,.png,.mp4,.zip"
+    onChange={handleProjectFile}
+    style={{ marginBottom: "5px" }}
+  />
+
+  <p style={{ fontSize: "13px", color: "#9ca3af" }}>
+    Only one file allowed (Max 100MB).  
+    If you have multiple files, merge them into a ZIP or single PDF before uploading.
+  </p>
+</>
             )}
 
             <button

@@ -5,10 +5,12 @@ import mongoose from "mongoose";
 import path from "path";
 import { fileURLToPath } from "url";
 import User from "./models/User.js";
+import axios from "axios";
 
 import { normalizeGoal, domainSkills } from "./config/careerDomains.js";
 import userRoutes from "./routes/userRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
+import roadmapRoutes from "./routes/roadmapRoutes.js";
 
 dotenv.config();
 
@@ -35,6 +37,7 @@ mongoose
 /* ================= ROUTES ================= */
 app.use("/api/users", userRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/roadmap", roadmapRoutes);
 
 /* ================= JOBS API ================= */
 app.get("/api/jobs", (req, res) => {
@@ -118,13 +121,44 @@ app.post("/api/analyze", async (req, res) => {
 
     user.careerGoal = goal;
 
-    user.roadmapProgress = skillsMissing.map(
-      (skill, index) => ({
-        week: `Week ${index + 1}`,
-        topics: [skill],
-        status: index === 0 ? "in-progress" : "locked"
-      })
+    const roadmap = [];
+
+for (let i = 0; i < skillsMissing.length; i++) {
+  const skill = skillsMissing[i];
+
+  let playlistLink = "";
+
+  try {
+    const response = await axios.get(
+      "https://www.googleapis.com/youtube/v3/search",
+      {
+        params: {
+          part: "snippet",
+          q: `${skill} full course playlist`,
+          type: "playlist",
+          maxResults: 1,
+          key: process.env.YOUTUBE_API_KEY
+        }
+      }
     );
+
+    if (response.data.items.length > 0) {
+      const playlistId = response.data.items[0].id.playlistId;
+      playlistLink = `https://www.youtube.com/playlist?list=${playlistId}`;
+    }
+  } catch (err) {
+    console.log("YouTube API Error:", err.message);
+  }
+
+  roadmap.push({
+    week: `Week ${i + 1}`,
+    topics: [skill],
+    playlist: playlistLink,
+    status: i === 0 ? "in-progress" : "locked"
+  });
+}
+
+user.roadmapProgress = roadmap;
 
     await user.save();
 
