@@ -245,6 +245,15 @@ export const domainSkills = {
   ]
 };
 
+export const skillSynonyms = {
+  "Programming": ["c", "c++", "java", "python", "coding"],
+  "Embedded Systems": ["embedded", "arduino", "raspberry pi"],
+  "Microcontrollers": ["microcontroller", "8051", "esp32"],
+  "Sensors": ["sensor", "temperature sensor"],
+  "Networking": ["network", "tcp/ip"],
+  "IoT Projects": ["iot project", "iot"]
+};
+
 
 // ===============================
 // NORMALIZE FUNCTION

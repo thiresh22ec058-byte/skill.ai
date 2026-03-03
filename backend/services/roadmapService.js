@@ -2,9 +2,15 @@
 
 import OpenAI from "openai";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY is not defined in .env");
+  }
+
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+}
 
 export const generateRoadmapFromGPT = async ({
   goal,
@@ -20,7 +26,9 @@ Skill Level: ${skillLevel}
 Current Skills: ${currentSkills.join(", ")}
 Daily Study Hours: ${dailyHours}
 
-Return ONLY valid JSON in this structure:
+Return ONLY valid JSON. Do NOT include markdown. Do NOT include backticks.
+
+Structure:
 
 {
   "title": "",
@@ -39,14 +47,24 @@ Return ONLY valid JSON in this structure:
 Make it practical, industry-focused and structured.
 `;
 
+  // ✅ FIX: Create OpenAI client properly
+  const openai = getOpenAIClient();
+
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
-      { role: "system", content: "You are an expert career mentor." },
+      { role: "system", content: "You are a roadmap generator that returns strict JSON only." },
       { role: "user", content: prompt },
     ],
     temperature: 0.7,
   });
 
-  return JSON.parse(response.choices[0].message.content);
+  const rawContent = response.choices[0].message.content;
+
+  try {
+    return JSON.parse(rawContent);
+  } catch (err) {
+    console.error("GPT returned invalid JSON:\n", rawContent);
+    throw new Error("Invalid JSON from GPT");
+  }
 };

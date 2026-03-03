@@ -1,83 +1,65 @@
 import mongoose from "mongoose";
 
-/* ================= ROADMAP SCHEMA ================= */
-/* ================= ROADMAP SCHEMA ================= */
+const aiUsageSchema = new mongoose.Schema(
+  {
+    roadmapCount: {
+      type: Number,
+      default: 0,
+    },
+    lastRoadmapDate: {
+      type: Date,
+      default: null,
+    },
+    totalAIGenerations: {
+      type: Number,
+      default: 0,
+    },
+  },
+  { _id: false }
+);
 
-const roadmapSchema = new mongoose.Schema({
-  week: {
-    type: String,
-    required: true
-  },
-  topics: {
-    type: [String],
-    default: []
-  },
-  playlist: {
-    type: String,
-    default: ""
-  },
-  status: {
-    type: String,
-    enum: ["locked", "in-progress", "completed"],
-    default: "locked"
-  }
-});
-
-/* ================= PROJECT SCHEMA ================= */
-const projectSchema = new mongoose.Schema({
-  title: String,
-  type: {
-    type: String,
-    enum: ["software", "hardware"],
-    default: "software"
-  },
-  link: String,
-  file: String, // base64 file (for hardware uploads)
-  completed: {
-    type: Boolean,
-    default: true
-  }
-});
-
-/* ================= USER SCHEMA ================= */
 const userSchema = new mongoose.Schema(
   {
-    name: String,
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
     email: {
       type: String,
-      unique: true
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
     },
-    password: String,
 
-    role: {
+    password: {
       type: String,
-      default: "Student"
+      required: true,
     },
 
-    profilePhoto: {
-      type: String,
-      default: ""
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
 
-    skills: {
-      type: [String],
-      default: []
+    // 🔥 Premium System
+    isPremium: {
+      type: Boolean,
+      default: false,
     },
 
-    careerGoal: {
-      type: String,
-      default: ""
+    subscriptionExpiry: {
+      type: Date,
+      default: null,
     },
 
-    roadmapProgress: {
-      type: [roadmapSchema],
-      default: []
+    // 🔥 AI Usage Tracking
+    aiUsage: {
+      type: aiUsageSchema,
+      default: () => ({}),
     },
-
-    projects: {
-      type: [projectSchema],
-      default: []
-    }
   },
   { timestamps: true }
 );

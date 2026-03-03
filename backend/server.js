@@ -6,7 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import User from "./models/User.js";
 import axios from "axios";
-
+import OpenAI from "openai";
 import { normalizeGoal, domainSkills } from "./config/careerDomains.js";
 import userRoutes from "./routes/userRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
