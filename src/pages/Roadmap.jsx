@@ -4,53 +4,102 @@ import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
 
 function Roadmap() {
-  const [profile, setProfile] = useState(null);
+
+  const [roadmap, setRoadmap] = useState(null);
+  const [progressData, setProgressData] = useState(null);
+
   const token = localStorage.getItem("token");
+  const goal = localStorage.getItem("careerGoal");
+
   const navigate = useNavigate();
 
-  const fetchProfile = async () => {
+  const headers = {
+    Authorization: `Bearer ${token}`
+  };
+
+  /* ================= FETCH ROADMAP ================= */
+
+  const fetchRoadmap = async () => {
+
     try {
-      const res = await axios.get(
-        "http://localhost:5000/api/profile",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+
+      const res = await axios.post(
+        "http://localhost:5000/api/roadmap",
+        { goal },
+        { headers }
       );
-      setProfile(res.data);
+
+      setRoadmap(res.data.roadmap);
+
     } catch (err) {
+
       console.error("Roadmap Fetch Error:", err);
+
     }
+
+  };
+
+  /* ================= FETCH USER PROGRESS ================= */
+
+  const fetchProgress = async () => {
+
+    try {
+
+      const res = await axios.get(
+        "http://localhost:5000/api/roadmap/user-progress",
+        { headers }
+      );
+
+      setProgressData(res.data);
+
+    } catch (err) {
+
+      console.error("Progress Fetch Error:", err);
+
+    }
+
   };
 
   useEffect(() => {
-    if (token) {
-      fetchProfile();
-    }
-  }, [token]);
 
-  const markComplete = async (index) => {
+    if (token && goal) {
+
+      fetchRoadmap();
+      fetchProgress();
+
+    }
+
+  }, [token, goal]);
+
+  /* ================= COMPLETE PHASE ================= */
+
+  const markComplete = async (phaseNumber) => {
+
     try {
-      await axios.put(
-        "http://localhost:5000/api/profile/update-week",
-        { weekIndex: index },
+
+      await axios.post(
+        "http://localhost:5000/api/roadmap/complete-phase",
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+          goal,
+          phaseNumber
+        },
+        { headers }
       );
 
-      fetchProfile();
+      fetchRoadmap();
+      fetchProgress();
+
     } catch (err) {
-      console.error("Update Week Error:", err);
+
+      console.error("Complete Phase Error:", err);
+
     }
+
   };
 
-  if (!profile) return null;
+  if (!roadmap) return null;
 
-  const progress = profile?.stats?.progressPercent || 0;
+  const progress = progressData?.progressPercent || 0;
 
   return (
     <>
@@ -62,110 +111,162 @@ function Roadmap() {
           padding: "60px 20px",
           display: "flex",
           flexDirection: "column",
-          alignItems: "center",
+          alignItems: "center"
         }}
       >
+
         <h1
           style={{
             fontSize: "38px",
             marginBottom: "10px",
-            textAlign: "center",
+            textAlign: "center"
           }}
         >
-          Learning Roadmap
+          {roadmap.title} Roadmap
         </h1>
 
         <p
           style={{
             marginBottom: "30px",
             color: "#facc15",
-            textAlign: "center",
+            textAlign: "center"
           }}
         >
-          Complete at least 60% of your roadmap to unlock job recommendations.
+          Complete phases to unlock job recommendations.
         </p>
 
         <div
           style={{
             width: "100%",
-            maxWidth: "800px",
+            maxWidth: "800px"
           }}
         >
-          {profile?.roadmapProgress?.map((week, index) => (
-            <div
-              key={index}
-              style={{
-                background: "linear-gradient(135deg,#111827,#1f2937)",
-                padding: "25px",
-                borderRadius: "14px",
-                marginBottom: "25px",
-              }}
-            >
-              <h3 style={{ marginBottom: "8px" }}>
-                {week.week}
-              </h3>
 
-              <p style={{ marginBottom: "6px" }}>
-                {week.topics?.[0]}
-              </p>
+          {roadmap.phases.map((phase) => {
 
-              {week.playlist && (
-                <a
-                  href={week.playlist}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    display: "inline-block",
-                    marginBottom: "10px",
-                    color: "#3b82f6",
-                    fontWeight: "500",
-                  }}
-                >
-                  ▶ View Playlist
-                </a>
-              )}
+            /* Handle topic formats safely */
+            const topics = phase.topics || [];
 
-              <p style={{ marginBottom: "12px" }}>
-                Status:{" "}
-                <strong
-                  style={{
-                    color:
-                      week.status === "completed"
-                        ? "#22c55e"
-                        : week.status === "in-progress"
-                        ? "#facc15"
-                        : "#9ca3af",
-                  }}
-                >
-                  {week.status}
-                </strong>
-              </p>
+            const playlist =
+              phase.playlist ||
+              phase.projectVideo ||
+              (topics[0] && topics[0].video);
 
-              {week.status !== "completed" && (
-                <button
-                  onClick={() => markComplete(index)}
-                  style={{
-                    padding: "8px 14px",
-                    background: "#2563eb",
-                    border: "none",
-                    borderRadius: "8px",
-                    color: "white",
-                    cursor: "pointer",
-                  }}
-                >
-                  Mark Complete
-                </button>
-              )}
-            </div>
-          ))}
+            return (
 
-          {/* Progress Section */}
+              <div
+                key={phase.phase}
+                style={{
+                  background: "linear-gradient(135deg,#111827,#1f2937)",
+                  padding: "25px",
+                  borderRadius: "14px",
+                  marginBottom: "25px"
+                }}
+              >
+
+                <h3 style={{ marginBottom: "8px" }}>
+                  Phase {phase.phase} — {phase.name}
+                </h3>
+
+                <p style={{ marginBottom: "6px" }}>
+                  Duration: {phase.duration}
+                </p>
+
+                {/* ================= TOPICS ================= */}
+
+                <div style={{ marginBottom: "10px" }}>
+
+                  <strong>Topics:</strong>
+
+                  {topics.map((topic, i) => {
+
+                    if (typeof topic === "string") {
+                      return <div key={i}>{topic}</div>;
+                    }
+
+                    return (
+                      <div key={i}>
+                        {topic.title}
+                      </div>
+                    );
+
+                  })}
+
+                </div>
+
+                {/* ================= PLAYLIST ================= */}
+
+                {playlist && (
+
+                  <a
+                    href={playlist}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: "inline-block",
+                      marginBottom: "10px",
+                      color: "#3b82f6",
+                      fontWeight: "500"
+                    }}
+                  >
+                    ▶ Watch Course
+                  </a>
+
+                )}
+
+                {/* ================= STATUS ================= */}
+
+                <p style={{ marginBottom: "12px" }}>
+                  Status:{" "}
+                  <strong
+                    style={{
+                      color:
+                        phase.status === "completed"
+                          ? "#22c55e"
+                          : phase.status === "unlocked"
+                          ? "#facc15"
+                          : "#9ca3af"
+                    }}
+                  >
+                    {phase.status}
+                  </strong>
+                </p>
+
+                {/* ================= COMPLETE BUTTON ================= */}
+
+                {phase.status === "unlocked" && (
+
+                  <button
+                    onClick={() => markComplete(phase.phase)}
+                    style={{
+                      padding: "8px 14px",
+                      background: "#2563eb",
+                      border: "none",
+                      borderRadius: "8px",
+                      color: "white",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Complete Phase
+                  </button>
+
+                )}
+
+              </div>
+
+            );
+
+          })}
+
+          {/* ================= PROGRESS BAR ================= */}
+
           <div
             style={{
               marginTop: "30px",
-              textAlign: "center",
+              textAlign: "center"
             }}
           >
+
             <h3>Progress: {progress}%</h3>
 
             <div
@@ -174,20 +275,23 @@ function Roadmap() {
                 background: "#374151",
                 borderRadius: "10px",
                 marginTop: "8px",
-                overflow: "hidden",
+                overflow: "hidden"
               }}
             >
+
               <div
                 style={{
                   width: `${progress}%`,
                   height: "100%",
                   background:
-                    "linear-gradient(90deg,#4f46e5,#22d3ee)",
+                    "linear-gradient(90deg,#4f46e5,#22d3ee)"
                 }}
               />
+
             </div>
 
             {progress >= 60 && (
+
               <button
                 onClick={() => navigate("/jobs")}
                 style={{
@@ -197,17 +301,21 @@ function Roadmap() {
                   border: "none",
                   borderRadius: "8px",
                   color: "white",
-                  cursor: "pointer",
+                  cursor: "pointer"
                 }}
               >
                 View Job Recommendations →
               </button>
+
             )}
+
           </div>
+
         </div>
       </div>
     </>
   );
+
 }
 
 export default Roadmap;

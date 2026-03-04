@@ -1,34 +1,59 @@
-// frontend/src/components/WeekCard.jsx
+import React from "react";
 
-function WeekCard({ week }) {
+const WeekCard = ({ phase, onComplete }) => {
+
   return (
-    <div className="bg-gray-900 p-6 rounded-xl mb-6 shadow-lg">
-      <h2 className="text-2xl font-bold mb-2">
-        Week {week.week}
+    <div style={{
+      border: "1px solid #ddd",
+      padding: "20px",
+      marginBottom: "20px",
+      borderRadius: "10px"
+    }}>
+
+      <h2>
+        Phase {phase.phase}: {phase.name}
       </h2>
 
-      <p className="text-sm text-gray-400 mb-4">
-        Total Duration: {Math.round(week.totalDuration)} mins
-      </p>
+      <p>Duration: {phase.duration}</p>
 
-      <ul className="mb-4">
-        {week.videos.map((video, index) => (
-          <li key={index} className="text-gray-300 text-sm">
-            • {video.title}
-          </li>
-        ))}
-      </ul>
+      <h3>Topics</h3>
 
-      <a
-        href={`https://www.youtube.com/watch?v=${week.videos[0].videoId}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="bg-gradient-to-r from-purple-500 to-blue-500 px-4 py-2 rounded-lg text-white"
-      >
-        Start Week {week.week}
-      </a>
+      {phase.topics.map((topic, i) => (
+        <div key={i}>
+          {topic.title} — 
+          <a href={topic.video} target="_blank">
+            Watch
+          </a>
+        </div>
+      ))}
+
+      <h3>Projects</h3>
+
+      {phase.projects.map((p, i) => (
+        <div key={i}>
+          {p.title} — 
+          <a href={p.tutorial} target="_blank">
+            Build
+          </a>
+        </div>
+      ))}
+
+      {phase.status === "completed" && (
+        <p style={{color:"green"}}>Completed</p>
+      )}
+
+      {phase.status === "unlocked" && (
+        <button onClick={onComplete}>
+          Complete Phase
+        </button>
+      )}
+
+      {phase.status === "locked" && (
+        <p>🔒 Locked</p>
+      )}
+
     </div>
   );
-}
+};
 
 export default WeekCard;

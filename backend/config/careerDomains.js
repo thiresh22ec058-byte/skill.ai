@@ -3,61 +3,121 @@
 // ===============================
 
 export const domainCategories = {
+
   "Software Development": ["software", "developer", "programming", "coding"],
+
   "Web Development": ["web", "frontend", "backend", "full stack"],
-  "Mobile Development": ["android", "ios", "mobile app"],
+
+  "Mobile Development": ["android", "ios", "mobile", "app developer"],
+
   "Data Science": ["data scientist", "data analyst", "analytics"],
+
   "Artificial Intelligence": ["ai", "artificial intelligence"],
+
   "Machine Learning": ["machine learning", "ml"],
+
   "Cybersecurity": ["cyber", "security", "ethical hacker"],
+
   "Cloud Computing": ["cloud", "aws", "azure", "gcp"],
+
   "DevOps": ["devops", "ci/cd"],
+
   "Blockchain": ["blockchain", "crypto", "web3"],
+
   "Game Development": ["game developer", "unity", "unreal"],
+
   "UI/UX Design": ["ui", "ux", "designer"],
+
   "Product Management": ["product manager"],
+
   "Embedded Systems": ["embedded", "microcontroller"],
+
   "IoT Engineering": ["iot", "internet of things"],
 
+
+  // Engineering Fields
+
   "Mechanical Engineering": ["mechanical"],
+
   "Civil Engineering": ["civil"],
+
   "Electrical Engineering": ["electrical"],
+
   "Electronics Engineering": ["electronics"],
+
   "Automobile Engineering": ["automobile"],
+
   "Aerospace Engineering": ["aerospace"],
+
   "Robotics Engineering": ["robotics"],
+
   "Mechatronics": ["mechatronics"],
+
   "Industrial Engineering": ["industrial"],
+
   "Chemical Engineering": ["chemical"],
 
+
+  // Business Fields
+
   "Entrepreneurship": ["entrepreneur", "startup", "founder", "business owner"],
+
   "Business Management": ["management", "manager"],
+
   "Finance & Banking": ["finance", "bank"],
+
   "Investment & Trading": ["trading", "stock market"],
+
   "Marketing": ["marketing"],
+
   "Digital Marketing": ["digital marketing", "seo"],
+
   "Human Resources": ["hr", "human resource"],
+
   "Operations Management": ["operations"],
+
   "Supply Chain Management": ["supply chain"],
 
+
+  // Creative Fields
+
   "Graphic Design": ["graphic"],
+
   "Content Creation": ["content creator", "youtuber"],
+
   "Video Editing": ["video editor"],
+
   "Animation": ["animation"],
+
   "Photography": ["photographer"],
 
+
+  // Professional Fields
+
   "Healthcare & Medicine": ["doctor", "medical", "healthcare"],
+
   "Law": ["lawyer", "advocate"],
+
   "Education": ["teacher", "professor"],
+
   "Research & Academia": ["research", "scientist"],
+
   "Government Services": ["government", "civil service"],
 
+
+  // Emerging Fields
+
   "Environmental Science": ["environment"],
+
   "Renewable Energy": ["renewable", "solar"],
+
   "Agriculture Technology": ["agriculture"],
+
   "Space & Astronomy": ["astronaut", "space"],
+
   "Sports & Fitness": ["sports", "fitness", "trainer"]
 };
+
 
 
 // ===============================
@@ -87,7 +147,7 @@ export const domainSkills = {
   "Mobile Development": [
     "Java/Kotlin",
     "Swift",
-    "Flutter/React Native",
+    "Flutter",
     "API Integration",
     "Mobile UI Design"
   ],
@@ -148,6 +208,28 @@ export const domainSkills = {
     "Projects"
   ],
 
+  "Game Development": [
+    "Unity",
+    "C#",
+    "Game Physics",
+    "3D Modeling",
+    "Projects"
+  ],
+
+  "UI/UX Design": [
+    "Figma",
+    "Wireframing",
+    "User Research",
+    "Prototyping"
+  ],
+
+  "Embedded Systems": [
+    "Embedded C",
+    "Microcontrollers",
+    "Sensors",
+    "Hardware Debugging"
+  ],
+
   "IoT Engineering": [
     "Programming",
     "Embedded Systems",
@@ -157,34 +239,8 @@ export const domainSkills = {
     "IoT Projects"
   ],
 
-  "Mechanical Engineering": [
-    "Engineering Mechanics",
-    "Thermodynamics",
-    "CAD",
-    "Manufacturing",
-    "Projects"
-  ],
 
-  "Civil Engineering": [
-    "Structural Analysis",
-    "Construction Planning",
-    "AutoCAD",
-    "Material Science"
-  ],
-
-  "Electrical Engineering": [
-    "Circuit Theory",
-    "Power Systems",
-    "Control Systems",
-    "Electronics"
-  ],
-
-  "Electronics Engineering": [
-    "Digital Electronics",
-    "Analog Circuits",
-    "Microcontrollers",
-    "Embedded Systems"
-  ],
+  // Business
 
   "Entrepreneurship": [
     "Business Planning",
@@ -208,12 +264,25 @@ export const domainSkills = {
     "Analytics"
   ],
 
+
+  // Creative
+
   "Graphic Design": [
     "Photoshop",
     "Illustrator",
     "Typography",
     "Branding"
   ],
+
+  "Video Editing": [
+    "Premiere Pro",
+    "After Effects",
+    "Color Grading",
+    "Storytelling"
+  ],
+
+
+  // Professional
 
   "Healthcare & Medicine": [
     "Biology",
@@ -245,32 +314,51 @@ export const domainSkills = {
   ]
 };
 
+
+
+// ===============================
+// SKILL SYNONYMS
+// ===============================
+
 export const skillSynonyms = {
+
   "Programming": ["c", "c++", "java", "python", "coding"],
+
   "Embedded Systems": ["embedded", "arduino", "raspberry pi"],
+
   "Microcontrollers": ["microcontroller", "8051", "esp32"],
+
   "Sensors": ["sensor", "temperature sensor"],
+
   "Networking": ["network", "tcp/ip"],
+
   "IoT Projects": ["iot project", "iot"]
 };
 
 
+
 // ===============================
-// NORMALIZE FUNCTION
+// NORMALIZE GOAL FUNCTION
 // ===============================
 
 export function normalizeGoal(goal) {
+
+  if (!goal) return null;
+
   const lowerGoal = goal.toLowerCase();
 
   // Exact match
   for (const domain in domainCategories) {
+
     if (domain.toLowerCase() === lowerGoal) {
       return domain;
     }
+
   }
 
   // Keyword match
   for (const domain in domainCategories) {
+
     if (
       domainCategories[domain].some(keyword =>
         lowerGoal.includes(keyword)
@@ -278,7 +366,9 @@ export function normalizeGoal(goal) {
     ) {
       return domain;
     }
+
   }
 
-  return "Software Development"; // safe fallback
+  // fallback
+  return "Software Development";
 }

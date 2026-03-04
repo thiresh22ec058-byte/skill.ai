@@ -1,15 +1,19 @@
 import mongoose from "mongoose";
 
+/* ================= AI USAGE SCHEMA ================= */
+
 const aiUsageSchema = new mongoose.Schema(
   {
     roadmapCount: {
       type: Number,
       default: 0,
     },
+
     lastRoadmapDate: {
       type: Date,
       default: null,
     },
+
     totalAIGenerations: {
       type: Number,
       default: 0,
@@ -17,6 +21,35 @@ const aiUsageSchema = new mongoose.Schema(
   },
   { _id: false }
 );
+
+/* ================= ROADMAP PROGRESS SCHEMA ================= */
+
+const roadmapProgressSchema = new mongoose.Schema(
+  {
+    goal: {
+      type: String,
+      default: null,
+    },
+
+    completedPhases: {
+      type: [Number],
+      default: [],
+    },
+
+    currentPhase: {
+      type: Number,
+      default: 1,
+    },
+
+    progressPercent: {
+      type: Number,
+      default: 0,
+    },
+  },
+  { _id: false }
+);
+
+/* ================= USER SCHEMA ================= */
 
 const userSchema = new mongoose.Schema(
   {
@@ -44,7 +77,8 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
-    // 🔥 Premium System
+    /* ===== Premium System ===== */
+
     isPremium: {
       type: Boolean,
       default: false,
@@ -55,9 +89,17 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
-    // 🔥 AI Usage Tracking
+    /* ===== AI Usage Tracking ===== */
+
     aiUsage: {
       type: aiUsageSchema,
+      default: () => ({}),
+    },
+
+    /* ===== Roadmap Learning Progress ===== */
+
+    roadmapProgress: {
+      type: roadmapProgressSchema,
       default: () => ({}),
     },
   },
