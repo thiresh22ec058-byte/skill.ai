@@ -1,8 +1,11 @@
 import express from "express";
-import { analyzeCareer } from "../controllers/aiController.js";
+
+console.log("AI ROUTES LOADED");
 
 const router = express.Router();
 
-router.post("/analyze-career", analyzeCareer);
+router.get("/test", (req, res) => {
+  res.json({ message: "AI route working" });
+});
 
 export default router;
