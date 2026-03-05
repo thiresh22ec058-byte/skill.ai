@@ -8,10 +8,12 @@ function Roadmap() {
   const [roadmap, setRoadmap] = useState(null);
   const [progressData, setProgressData] = useState(null);
 
-  const token = localStorage.getItem("token");
-  const goal = localStorage.getItem("careerGoal");
-
   const navigate = useNavigate();
+
+  const token = localStorage.getItem("token");
+
+  /* fallback if careerGoal was not stored */
+  const goal = localStorage.getItem("careerGoal") || "AI Engineer";
 
   const headers = {
     Authorization: `Bearer ${token}`
@@ -29,7 +31,11 @@ function Roadmap() {
         { headers }
       );
 
-      setRoadmap(res.data.roadmap);
+      /* FIX: backend returns res.data, not res.data.roadmap */
+
+      if (res.data) {
+        setRoadmap(res.data);
+      }
 
     } catch (err) {
 
@@ -60,16 +66,16 @@ function Roadmap() {
 
   };
 
+  /* ================= LOAD DATA ================= */
+
   useEffect(() => {
 
-    if (token && goal) {
+    if (!token) return;
 
-      fetchRoadmap();
-      fetchProgress();
+    fetchRoadmap();
+    fetchProgress();
 
-    }
-
-  }, [token, goal]);
+  }, [token]);
 
   /* ================= COMPLETE PHASE ================= */
 
@@ -97,7 +103,28 @@ function Roadmap() {
 
   };
 
-  if (!roadmap) return null;
+  /* ================= LOADING ================= */
+
+  if (!roadmap || !roadmap.phases) {
+
+    return (
+      <>
+        <Navbar />
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            fontSize: "20px"
+          }}
+        >
+          Loading roadmap...
+        </div>
+      </>
+    );
+
+  }
 
   const progress = progressData?.progressPercent || 0;
 
@@ -135,22 +162,18 @@ function Roadmap() {
           Complete phases to unlock job recommendations.
         </p>
 
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "800px"
-          }}
-        >
+        <div style={{ width: "100%", maxWidth: "800px" }}>
 
           {roadmap.phases.map((phase) => {
 
-            /* Handle topic formats safely */
-            const topics = phase.topics || [];
+            const topics = Array.isArray(phase?.topics)
+              ? phase.topics
+              : [];
 
             const playlist =
-              phase.playlist ||
-              phase.projectVideo ||
-              (topics[0] && topics[0].video);
+              phase?.playlist ||
+              phase?.projectVideo ||
+              (topics[0] && topics[0]?.video);
 
             return (
 
@@ -172,10 +195,7 @@ function Roadmap() {
                   Duration: {phase.duration}
                 </p>
 
-                {/* ================= TOPICS ================= */}
-
                 <div style={{ marginBottom: "10px" }}>
-
                   <strong>Topics:</strong>
 
                   {topics.map((topic, i) => {
@@ -184,17 +204,11 @@ function Roadmap() {
                       return <div key={i}>{topic}</div>;
                     }
 
-                    return (
-                      <div key={i}>
-                        {topic.title}
-                      </div>
-                    );
+                    return <div key={i}>{topic?.title}</div>;
 
                   })}
 
                 </div>
-
-                {/* ================= PLAYLIST ================= */}
 
                 {playlist && (
 
@@ -214,8 +228,6 @@ function Roadmap() {
 
                 )}
 
-                {/* ================= STATUS ================= */}
-
                 <p style={{ marginBottom: "12px" }}>
                   Status:{" "}
                   <strong
@@ -231,8 +243,6 @@ function Roadmap() {
                     {phase.status}
                   </strong>
                 </p>
-
-                {/* ================= COMPLETE BUTTON ================= */}
 
                 {phase.status === "unlocked" && (
 
@@ -258,14 +268,7 @@ function Roadmap() {
 
           })}
 
-          {/* ================= PROGRESS BAR ================= */}
-
-          <div
-            style={{
-              marginTop: "30px",
-              textAlign: "center"
-            }}
-          >
+          <div style={{ marginTop: "30px", textAlign: "center" }}>
 
             <h3>Progress: {progress}%</h3>
 

@@ -8,12 +8,18 @@ import { extractSkills } from "../services/resumeAnalyzer.js";
 import { matchCareers } from "../services/careerMatcher.js";
 import { findSkillGap } from "../services/skillGapAnalyzer.js";
 
-/* TEXT INPUT ANALYSIS */
+/* ================= TEXT INPUT ANALYSIS ================= */
 
 export async function analyzeCareer(req, res) {
   try {
 
     const { resumeText } = req.body;
+
+    if (!resumeText) {
+      return res.status(400).json({
+        message: "resumeText is required"
+      });
+    }
 
     const detectedSkills = extractSkills(resumeText);
 
@@ -21,14 +27,33 @@ export async function analyzeCareer(req, res) {
 
     const bestCareer = matchedCareers[0];
 
+    let confidence = "Low";
+
+if (bestCareer.score >= 70) {
+  confidence = "High";
+} else if (bestCareer.score >= 40) {
+  confidence = "Medium";
+}
+
     const skillGaps = findSkillGap(detectedSkills, bestCareer);
 
+    /* SKILL GRAPH GENERATION */
+
+    const skillGraph = bestCareer.requiredSkills.map(skill => ({
+      skill,
+      status: detectedSkills.map(s => s.toLowerCase()).includes(skill.toLowerCase())
+        ? "known"
+        : "missing"
+    }));
+
     res.json({
-      detectedSkills,
-      bestCareer,
-      skillGaps,
-      roadmap: bestCareer?.roadmap || []
-    });
+  detectedSkills,
+  bestCareer,
+  confidence,
+  skillGaps,
+  roadmap: bestCareer?.roadmap || [],
+  skillGraph
+});
 
   } catch (error) {
 
@@ -41,11 +66,18 @@ export async function analyzeCareer(req, res) {
   }
 }
 
-/* PDF RESUME ANALYSIS */
+
+/* ================= PDF RESUME ANALYSIS ================= */
 
 export async function analyzeCareerFromPDF(req, res) {
 
   try {
+
+    if (!req.file) {
+      return res.status(400).json({
+        message: "No resume file uploaded"
+      });
+    }
 
     const pdfBuffer = fs.readFileSync(req.file.path);
 
@@ -61,11 +93,21 @@ export async function analyzeCareerFromPDF(req, res) {
 
     const skillGaps = findSkillGap(detectedSkills, bestCareer);
 
+    /* SKILL GRAPH GENERATION */
+
+    const skillGraph = bestCareer.requiredSkills.map(skill => ({
+      skill,
+      status: detectedSkills.map(s => s.toLowerCase()).includes(skill.toLowerCase())
+        ? "known"
+        : "missing"
+    }));
+
     res.json({
       detectedSkills,
       bestCareer,
       skillGaps,
-      roadmap: bestCareer?.roadmap || []
+      roadmap: bestCareer?.roadmap || [],
+      skillGraph
     });
 
   } catch (error) {

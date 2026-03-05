@@ -29,6 +29,7 @@ import dashboardRoutes from "./routes/dashboardRoutes.js";
 import jobReadinessRoutes from "./routes/jobReadinessRoutes.js";
 import resumeRoutes from "./routes/resumeRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
+import progressRoutes from "./routes/progressRoutes.js";
 
 console.log("AI ROUTES IMPORTED");
 
@@ -74,6 +75,10 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/job-readiness", jobReadinessRoutes);
 app.use("/api/resume", resumeRoutes);
 app.use("/api/ai", aiRoutes);
+
+/* ===== PROGRESS TRACKER ROUTE ===== */
+
+app.use("/api/progress", progressRoutes);
 
 /* ================= TEST ROUTE ================= */
 

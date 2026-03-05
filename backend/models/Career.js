@@ -1,66 +1,23 @@
 import mongoose from "mongoose";
 
-const phaseSchema = new mongoose.Schema({
-
+const roadmapSchema = new mongoose.Schema({
   phase: Number,
   name: String,
   duration: String,
-
-  topics: [
-    {
-      title: String,
-      video: String
-    }
-  ],
-
-  playlist: String,
-  projectVideo: String,
-  projects: [String]
-
-}, { _id: false });
-
-
-const salarySchema = new mongoose.Schema({
-
-  country: String,
-  currency: String,
-  min: Number,
-  max: Number
-
-}, { _id: false });
-
+  playlist: String
+});
 
 const careerSchema = new mongoose.Schema({
-
   title: {
     type: String,
-    required: true,
     unique: true
   },
-
-  domain: {
-    type: String,
-    required: true
-  },
-
+  domain: String,
   description: String,
 
   requiredSkills: [String],
 
-  roadmap: [phaseSchema],
-
-  demandLevel: {
-    type: String,
-    enum: ["low","medium","high"],
-    default: "medium"
-  },
-
-  salaries: [salarySchema],
-
-  createdAt: {
-    type: Date,
-    default: Date.now
-  }
+  roadmap: [roadmapSchema]
 
 });
 

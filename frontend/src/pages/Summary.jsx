@@ -1,26 +1,75 @@
-import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Summary() {
 
   const navigate = useNavigate();
   const [analysis, setAnalysis] = useState(null);
 
+  /* ================= LOAD ANALYSIS ================= */
   useEffect(() => {
 
     const stored = localStorage.getItem("analysis");
 
-    if (stored) {
-      setAnalysis(JSON.parse(stored));
-    } else {
+    if (!stored) {
       navigate("/");
+      return;
+    }
+
+    try {
+
+      const parsed = JSON.parse(stored);
+
+      if (!parsed || typeof parsed !== "object") {
+        navigate("/");
+        return;
+      }
+
+      setAnalysis(parsed);
+
+    } catch (error) {
+
+      console.error("Invalid analysis data:", error);
+      navigate("/");
+
     }
 
   }, [navigate]);
 
-  if (!analysis) return null;
+  /* ================= LOADING STATE ================= */
+  if (!analysis) {
+    return <div>Loading...</div>;
+  }
+
+  /* ================= SAFE DATA EXTRACTION ================= */
+
+  const career =
+    analysis?.career ||
+    analysis?.bestCareer?.title ||
+    "Unknown Career";
+
+  const skillsHave = Array.isArray(analysis?.skillsHave)
+    ? analysis.skillsHave
+    : Array.isArray(analysis?.detectedSkills)
+    ? analysis.detectedSkills
+    : [];
+
+  const skillsMissing = Array.isArray(analysis?.skillsMissing)
+    ? analysis.skillsMissing
+    : Array.isArray(analysis?.skillGaps)
+    ? analysis.skillGaps
+    : [];
+
+  const progress = Number(
+    analysis?.progress ||
+    analysis?.bestCareer?.score ||
+    0
+  );
+
+  /* ================= UI ================= */
 
   return (
+
     <div className="page-container">
 
       <div className="glass-card">
@@ -29,71 +78,73 @@ function Summary() {
           Your Skill Analysis
         </h2>
 
-        {/* Career Goal */}
-        <p style={{ marginTop: "10px", opacity: "0.8" }}>
-          Career Goal: <strong>{analysis.career}</strong>
+        <p>
+          Career Goal: <b>{career}</b>
         </p>
 
-        {/* Progress Score */}
-        <div style={{ marginTop: "25px" }}>
+        <h3>
+          Readiness Score: {progress}%
+        </h3>
 
-          <h3>Readiness Score: {analysis.progress}%</h3>
+        {/* Progress Bar */}
+
+        <div
+          style={{
+            width: "100%",
+            height: "10px",
+            background: "#1e293b",
+            borderRadius: "10px",
+            marginBottom: "20px"
+          }}
+        >
 
           <div
             style={{
-              height: "10px",
-              background: "#374151",
-              borderRadius: "10px",
-              marginTop: "8px",
-              overflow: "hidden"
+              width: `${progress}%`,
+              height: "100%",
+              background:
+                "linear-gradient(90deg,#7c3aed,#06b6d4)",
+              borderRadius: "10px"
             }}
-          >
-            <div
-              style={{
-                width: `${analysis.progress}%`,
-                height: "100%",
-                background: "linear-gradient(90deg,#4f46e5,#22d3ee)"
-              }}
-            />
-          </div>
+          />
 
         </div>
 
         {/* Skills You Have */}
-        <div
-          className="analysis-box"
-          style={{ marginTop: "25px" }}
-        >
+
+        <div className="analysis-card">
 
           <h3>✅ Skills You Have</h3>
 
-          {analysis.skillsHave?.length > 0 ? (
+          {skillsHave.length > 0 ? (
 
-            analysis.skillsHave.map((skill, index) => (
-              <div key={index}>{skill}</div>
-            ))
+            <ul>
+              {skillsHave.map((skill, index) => (
+                <li key={index}>{skill}</li>
+              ))}
+            </ul>
 
           ) : (
 
-            <p>No skills added</p>
+            <p>No skills detected</p>
 
           )}
 
         </div>
 
-        {/* Skills Missing */}
-        <div
-          className="analysis-box"
-          style={{ marginTop: "25px" }}
-        >
+        {/* Missing Skills */}
+
+        <div className="analysis-card">
 
           <h3>❌ Skills Missing for Your Goal</h3>
 
-          {analysis.skillsMissing?.length > 0 ? (
+          {skillsMissing.length > 0 ? (
 
-            analysis.skillsMissing.map((skill, index) => (
-              <div key={index}>{skill}</div>
-            ))
+            <ul>
+              {skillsMissing.map((skill, index) => (
+                <li key={index}>{skill}</li>
+              ))}
+            </ul>
 
           ) : (
 
@@ -103,10 +154,10 @@ function Summary() {
 
         </div>
 
-        {/* Start Learning Button */}
+        {/* Navigate to Roadmap */}
+
         <button
           className="primary-btn"
-          style={{ marginTop: "30px" }}
           onClick={() => navigate("/roadmap")}
         >
           Start Learning →
@@ -115,8 +166,8 @@ function Summary() {
       </div>
 
     </div>
-  );
 
+  );
 }
 
 export default Summary;

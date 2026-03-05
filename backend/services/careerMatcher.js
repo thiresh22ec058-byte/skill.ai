@@ -1,41 +1,46 @@
 import Career from "../models/Career.js";
 
+/*
+Career Matching Algorithm
+Matches detected skills with required career skills
+*/
+
 export async function matchCareers(userSkills) {
 
   const careers = await Career.find();
 
-  const results = careers.map((career) => {
+  const results = [];
 
-    const requiredSkills = career.requiredSkills.map(skill =>
-      skill.toLowerCase()
-    );
+  for (const career of careers) {
 
-    const matchedSkills = requiredSkills.filter(skill =>
-      userSkills.includes(skill)
-    );
+    const required = career.requiredSkills.map(s => s.toLowerCase());
 
-    const matchScore = Math.round(
-      (matchedSkills.length / requiredSkills.length) * 100
-    );
+    let matched = 0;
 
-    return {
-      _id: career._id,
+    for (const skill of userSkills) {
+
+      if (required.includes(skill.toLowerCase())) {
+        matched++;
+      }
+
+    }
+
+    const score = Math.round((matched / required.length) * 100);
+
+    results.push({
       title: career.title,
       domain: career.domain,
       description: career.description,
       requiredSkills: career.requiredSkills,
-      matchScore,
-      roadmap: career.roadmap
-    };
-  });
+      roadmap: career.roadmap,
+      score
+    });
 
-  // sort careers by highest match
-  results.sort((a, b) => b.matchScore - a.matchScore);
+  }
+
+  // Sort by highest score
+  results.sort((a, b) => b.score - a.score);
 
   return results;
-}
 
-return results
-  .sort((a,b)=>b.matchScore-a.matchScore)
-  .slice(0,5);
-  
+}

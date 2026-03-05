@@ -16,12 +16,11 @@ function CareerGoal() {
 
     if (!trimmed) return;
 
-    navigate("/skills", {
-      state: {
-        userType,
-        careerGoal: trimmed
-      }
-    });
+    localStorage.setItem("careerGoal", goal);
+
+navigate("/skills", {
+  state: { careerGoal: goal }
+});
 
   };
 

@@ -4,6 +4,7 @@ import axios from "axios";
 import Navbar from "../components/Navbar";
 
 function Jobs() {
+
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState(null);
@@ -11,12 +12,18 @@ function Jobs() {
 
   const token = localStorage.getItem("token");
 
-  // 🔹 Fetch Profile
+  /* ================= FETCH PROFILE ================= */
+
   useEffect(() => {
+
+    if (!token) return;
+
     const fetchProfile = async () => {
+
       try {
+
         const res = await axios.get(
-          "http://localhost:5000/api/profile",
+          "http://localhost:5000/api/users/me",
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -27,25 +34,33 @@ function Jobs() {
         setProfile(res.data);
 
       } catch (err) {
+
         console.error("Fetch Profile Error:", err);
+
       }
+
     };
 
     fetchProfile();
-  }, []);
 
-  // 🔹 Fetch Jobs From Backend (Dynamic)
+  }, [token]);
+
+  /* ================= FETCH JOBS ================= */
+
   useEffect(() => {
+
     if (!profile) return;
 
     const fetchJobs = async () => {
+
       try {
+
         const res = await axios.get(
           "http://localhost:5000/api/jobs",
           {
             params: {
-              readiness: profile.stats.jobReadinessPercent,
-              domain: profile.careerGoal
+              readiness: profile?.stats?.jobReadinessPercent || 0,
+              domain: profile?.careerGoal
             }
           }
         );
@@ -53,17 +68,36 @@ function Jobs() {
         setJobRoles(res.data);
 
       } catch (err) {
+
         console.error("Fetch Jobs Error:", err);
+
       }
+
     };
 
     fetchJobs();
 
   }, [profile]);
 
-  if (!profile) return null;
+  if (!profile) {
+    return (
+      <>
+        <Navbar />
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center"
+          }}
+        >
+          Loading jobs...
+        </div>
+      </>
+    );
+  }
 
-  const readiness = profile.stats.jobReadinessPercent;
+  const readiness = profile?.stats?.jobReadinessPercent || 0;
 
   return (
     <>
@@ -76,38 +110,50 @@ function Jobs() {
             Recommended Jobs For You
           </h2>
 
-          {/* 🔥 Job Readiness Section */}
+          {/* ================= JOB READINESS ================= */}
+
           <div style={{ marginTop: "15px", marginBottom: "25px" }}>
+
             <h3>Job Readiness: {readiness}%</h3>
 
-            <div style={{
-              height: "10px",
-              width: "100%",
-              background: "rgba(255,255,255,0.1)",
-              borderRadius: "10px",
-              overflow: "hidden",
-              marginTop: "8px"
-            }}>
-              <div style={{
-                width: `${readiness}%`,
-                height: "100%",
-                background: "linear-gradient(90deg,#4f46e5,#22d3ee)",
-                transition: "0.5s"
-              }} />
+            <div
+              style={{
+                height: "10px",
+                width: "100%",
+                background: "rgba(255,255,255,0.1)",
+                borderRadius: "10px",
+                overflow: "hidden",
+                marginTop: "8px"
+              }}
+            >
+
+              <div
+                style={{
+                  width: `${readiness}%`,
+                  height: "100%",
+                  background: "linear-gradient(90deg,#4f46e5,#22d3ee)",
+                  transition: "0.5s"
+                }}
+              />
+
             </div>
 
             <p style={{ marginTop: "8px", color: "#facc15" }}>
               Complete more roadmap weeks and projects to increase your job readiness.
             </p>
+
           </div>
 
-          {/* 🔥 Dynamic Job Roles */}
+          {/* ================= JOB ROLES ================= */}
+
           {jobRoles.map((job, index) => (
+
             <div
               key={index}
               className="analysis-box"
               style={{ marginTop: "15px" }}
             >
+
               <h3>{job}</h3>
 
               <p style={{ fontSize: "14px", opacity: 0.8 }}>
@@ -129,11 +175,15 @@ function Jobs() {
               >
                 Apply Now
               </button>
+
             </div>
+
           ))}
 
-          {/* Navigation Buttons */}
+          {/* ================= NAVIGATION ================= */}
+
           <div style={{ marginTop: "30px" }}>
+
             <button
               className="primary-btn"
               onClick={() => navigate("/profile")}
@@ -148,12 +198,14 @@ function Jobs() {
             >
               Continue Learning
             </button>
+
           </div>
 
         </div>
       </div>
     </>
   );
+
 }
 
 export default Jobs;

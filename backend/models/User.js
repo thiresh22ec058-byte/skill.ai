@@ -72,6 +72,20 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
+    /* ===== User Skills ===== */
+
+    skills: {
+      type: [String],
+      default: [],
+    },
+
+    /* ===== Career Goal ===== */
+
+    careerGoal: {
+      type: String,
+      default: null,
+    },
+
     isVerified: {
       type: Boolean,
       default: false,

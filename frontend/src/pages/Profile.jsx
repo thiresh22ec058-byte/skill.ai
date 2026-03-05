@@ -1,421 +1,120 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import Navbar from "../components/Navbar";
+import express from "express";
+import User from "../models/User.js";
+import { protect } from "../middleware/authMiddleware.js";
 
-function Profile() {
-  const token = localStorage.getItem("token");
+const router = express.Router();
 
-  const [profile, setProfile] = useState(null);
-  const [editMode, setEditMode] = useState(false);
+/* ================= GET PROFILE ================= */
 
-  const [name, setName] = useState("");
-  const [role, setRole] = useState("");
-  const [profilePhoto, setProfilePhoto] = useState("");
+router.get("/", protect, async (req, res) => {
 
-  const [newTitle, setNewTitle] = useState("");
-  const [newLink, setNewLink] = useState("");
-  const [projectType, setProjectType] = useState("software");
-  const [selectedFile, setSelectedFile] = useState(null);
-
-  /* ================= FETCH PROFILE ================= */
-  const fetchProfile = async () => {
-    try {
-      const res = await axios.get(
-        "http://localhost:5000/api/profile",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setProfile(res.data);
-      setName(res.data.name || "");
-      setRole(res.data.role || "");
-      setProfilePhoto(res.data.profilePhoto || "");
-    } catch (err) {
-      console.error("Profile Fetch Error:", err);
-    }
-  };
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  /* ================= PROFILE IMAGE UPLOAD ================= */
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    const reader = new FileReader();
-
-    reader.onloadend = () => {
-      setProfilePhoto(reader.result);
-    };
-
-    if (file) reader.readAsDataURL(file);
-  };
-
-  /* ================= SAVE PROFILE ================= */
-  const saveProfile = async () => {
-    try {
-      await axios.put(
-        "http://localhost:5000/api/profile/update-profile",
-        { name, role, profilePhoto },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setEditMode(false);
-      fetchProfile();
-    } catch (err) {
-      console.error("Save Profile Error:", err);
-    }
-  };
-
-
-  /* ================= PROJECT FILE UPLOAD ================= */
-const handleProjectFile = (e) => {
-  setSelectedFile(e.target.files[0]);
-};
-
-  /* ================= ADD PROJECT ================= */
-  const addProject = async () => {
   try {
-    if (!newTitle) return;
 
-    if (projectType === "hardware" && !selectedFile) {
-      alert("Please select a file for hardware project");
-      return;
-    }
+    const user = await User.findById(req.user.id).select("-password");
 
-    const formData = new FormData();
-    formData.append("title", newTitle);
-    formData.append("type", projectType);
+    res.json(user);
 
-    if (projectType === "software") {
-      if (!newLink) {
-        alert("Please enter project link");
-        return;
-      }
-      formData.append("link", newLink);
-    } else {
-      formData.append("file", selectedFile);
-    }
+  } catch (error) {
 
-    await axios.post(
-      "http://localhost:5000/api/profile/add-project",
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
+    console.error("Profile Fetch Error:", error);
 
-    setNewTitle("");
-    setNewLink("");
-    setSelectedFile(null);
+    res.status(500).json({ message: "Server Error" });
 
-    fetchProfile();
-
-  } catch (err) {
-    console.error("Add Project Error:", err);
-    alert("Failed to add project");
   }
-};
-  /* ================= DELETE PROJECT ================= */
-  const deleteProject = async (index) => {
-    try {
-      await axios.delete(
-        `http://localhost:5000/api/profile/delete-project/${index}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
 
-      fetchProfile();
-    } catch (err) {
-      console.error("Delete Project Error:", err);
+});
+
+
+/* ================= UPDATE PROFILE ================= */
+
+router.put("/update-profile", protect, async (req, res) => {
+
+  try {
+
+    const { name, role, profilePhoto } = req.body;
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
-  };
 
- if (!profile) return <div>Loading...</div>;
+    user.name = name || user.name;
+    user.role = role || user.role;
+    user.profilePhoto = profilePhoto || user.profilePhoto;
 
-  return (
-    <>
-      <Navbar />
+    await user.save();
 
-      <div
-        style={{
-          minHeight: "100vh",
-          padding: "60px 20px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center"
-        }}
-      >
-        {/* ================= PROFILE CARD ================= */}
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "900px",
-            background: "linear-gradient(135deg,#111827,#1f2937)",
-            padding: "30px",
-            borderRadius: "18px",
-            marginBottom: "30px"
-          }}
-        >
-          <div style={{ display: "flex", gap: "30px" }}>
-            <div>
-              <img
-                src={profilePhoto || "https://via.placeholder.com/140"}
-                alt="profile"
-                style={{
-                  width: "140px",
-                  height: "140px",
-                  borderRadius: "50%",
-                  objectFit: "cover"
-                }}
-              />
+    res.json({ message: "Profile updated successfully" });
 
-              {editMode && (
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  style={{ marginTop: "10px" }}
-                />
-              )}
-            </div>
+  } catch (error) {
 
-            <div style={{ flex: 1 }}>
-              {editMode ? (
-                <>
-                  <input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    style={{
-                      fontSize: "24px",
-                      marginBottom: "10px",
-                      width: "100%"
-                    }}
-                  />
+    console.error("Update Profile Error:", error);
 
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    style={{
-                      padding: "6px",
-                      marginBottom: "15px"
-                    }}
-                  >
-                    <option>Student</option>
-                    <option>Fresher</option>
-                    <option>Working Professional</option>
-                  </select>
+    res.status(500).json({ message: "Server Error" });
 
-                  <button
-                    onClick={saveProfile}
-                    style={{
-                      padding: "8px 18px",
-                      background: "#16a34a",
-                      border: "none",
-                      borderRadius: "8px",
-                      color: "white",
-                      cursor: "pointer"
-                    }}
-                  >
-                    Save Changes
-                  </button>
-                </>
-              ) : (
-                <>
-                  <h2>{profile.name}</h2>
-                  <p style={{ color: "#9ca3af" }}>{profile.role}</p>
-                  <p style={{ color: "#facc15" }}>{profile.careerGoal}</p>
+  }
 
-                  <button
-                    onClick={() => setEditMode(true)}
-                    style={{
-                      marginTop: "10px",
-                      padding: "6px 14px",
-                      background: "#2563eb",
-                      border: "none",
-                      borderRadius: "8px",
-                      color: "white",
-                      cursor: "pointer"
-                    }}
-                  >
-                    Edit Profile
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+});
 
-        
-<div
-  style={{
-    width: "100%",
-    maxWidth: "900px",
-    background: "linear-gradient(135deg,#111827,#1f2937)",
-    padding: "25px",
-    borderRadius: "18px",
-    marginBottom: "30px"
-  }}
->
-  <h3>Learning Roadmap</h3>
 
-  {profile.roadmapProgress?.length === 0 && (
-    <p style={{ color: "#9ca3af" }}>No roadmap yet</p>
-  )}
+/* ================= ADD PROJECT ================= */
 
-  {profile.roadmapProgress?.map((week, index) => (
-    <div key={index} style={{ marginTop: "8px" }}>
-      <strong>{week.week}</strong> — {week.topics?.[0]} ({week.status})
-    </div>
-  ))}
-</div>
+router.post("/add-project", protect, async (req, res) => {
 
-        {/* ================= PROJECT SECTION ================= */}
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "900px",
-            background: "linear-gradient(135deg,#111827,#1f2937)",
-            padding: "25px",
-            borderRadius: "18px"
-          }}
-        >
-          <h3>My Projects</h3>
+  try {
 
-          {profile.projects?.map((p, i) => (
-  <div
-    key={i}
-    style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginTop: "10px",
-      padding: "10px",
-      background: "#1f2937",
-      borderRadius: "8px"
-    }}
-  >
-    <span>{p.title}</span>
+    const { title, link } = req.body;
 
-    <div style={{ display: "flex", gap: "10px" }}>
+    const user = await User.findById(req.user.id);
 
-      {/* Show View if link exists */}
-      {p.link && (
-        <a
-          href={p.link}
-          target="_blank"
-          rel="noreferrer"
-          style={{ color: "#3b82f6" }}
-        >
-          View
-        </a>
-      )}
+    if (!user.projects) user.projects = [];
 
-      {/* Show View File if file exists */}
-      {p.file && (
-        <a
-          href={`http://localhost:5000${p.file}`}
-          target="_blank"
-          rel="noreferrer"
-          style={{ color: "#3b82f6" }}
-        >
-          View File
-        </a>
-      )}
+    user.projects.push({
+      title,
+      link
+    });
 
-      <button
-        onClick={() => deleteProject(i)}
-        style={{
-          background: "#dc2626",
-          border: "none",
-          padding: "5px 10px",
-          borderRadius: "6px",
-          color: "white",
-          cursor: "pointer"
-        }}
-      >
-        Delete
-      </button>
-    </div>
-  </div>
-))}
+    await user.save();
 
-          {/* Add Project Form */}
-          <div style={{ marginTop: "20px" }}>
-            <input
-              placeholder="Project Title"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "8px",
-                marginBottom: "10px",
-                borderRadius: "6px"
-              }}
-            />
+    res.json({ message: "Project added successfully" });
 
-            <select
-              value={projectType}
-              onChange={(e) => setProjectType(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "8px",
-                marginBottom: "10px",
-                borderRadius: "6px"
-              }}
-            >
-              <option value="software">Software Project</option>
-              <option value="hardware">Hardware Project</option>
-            </select>
+  } catch (error) {
 
-            {projectType === "software" ? (
-              <input
-                placeholder="Project Link"
-                value={newLink}
-                onChange={(e) => setNewLink(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "8px",
-                  marginBottom: "10px",
-                  borderRadius: "6px"
-                }}
-              />
-            ) : (
-             <>
-  <input
-    type="file"
-    accept=".pdf,.ppt,.pptx,.jpg,.png,.mp4,.zip"
-    onChange={handleProjectFile}
-    style={{ marginBottom: "5px" }}
-  />
+    console.error("Add Project Error:", error);
 
-  <p style={{ fontSize: "13px", color: "#9ca3af" }}>
-    Only one file allowed (Max 100MB).  
-    If you have multiple files, merge them into a ZIP or single PDF before uploading.
-  </p>
-</>
-            )}
+    res.status(500).json({ message: "Server Error" });
 
-            <button
-              onClick={addProject}
-              style={{
-                background: "#16a34a",
-                border: "none",
-                padding: "8px 14px",
-                borderRadius: "6px",
-                color: "white",
-                cursor: "pointer"
-              }}
-            >
-              Add Project
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-}
+  }
 
-export default Profile;
+});
+
+
+/* ================= DELETE PROJECT ================= */
+
+router.delete("/delete-project/:index", protect, async (req, res) => {
+
+  try {
+
+    const user = await User.findById(req.user.id);
+
+    const index = req.params.index;
+
+    user.projects.splice(index, 1);
+
+    await user.save();
+
+    res.json({ message: "Project deleted successfully" });
+
+  } catch (error) {
+
+    console.error("Delete Project Error:", error);
+
+    res.status(500).json({ message: "Server Error" });
+
+  }
+
+});
+
+
+export default router;

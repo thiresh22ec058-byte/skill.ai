@@ -61,16 +61,27 @@ function SkillInput() {
         return;
       }
 
-      /* 1️⃣ Save Skills to MongoDB */
-      await axios.put(
-        "http://localhost:5000/api/users/skills",
-        { skills },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
+      /* 1️⃣ Try to Save Skills to MongoDB (safe attempt) */
+      try {
+
+        await axios.put(
+          "http://localhost:5000/api/users/skills",
+          { skills },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
           }
-        }
-      );
+        );
+
+      } catch (saveError) {
+
+        console.warn(
+          "Skill save failed but continuing:",
+          saveError.response?.data || saveError.message
+        );
+
+      }
 
       /* 2️⃣ Decode JWT Token */
       let userId;
@@ -93,12 +104,11 @@ function SkillInput() {
 
       /* 3️⃣ Call Analyze API */
       const analyzeResponse = await axios.post(
-        "http://localhost:5000/api/analyze",
-        {
-          goal: careerGoal,
-          userId
-        }
-      );
+"http://localhost:5000/api/ai/analyze-career",
+{
+resumeText: skills.join(" ")
+}
+);
 
       /* 4️⃣ Save analysis result */
       localStorage.setItem(
