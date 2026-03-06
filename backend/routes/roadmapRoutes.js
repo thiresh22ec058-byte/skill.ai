@@ -2,6 +2,7 @@ import express from "express";
 import User from "../models/User.js";
 import Career from "../models/Career.js";
 import { protect } from "../middleware/authMiddleware.js";
+import { generateRoadmap } from "../services/roadmapService.js";
 
 const router = express.Router();
 
@@ -12,27 +13,14 @@ router.post("/", protect, async (req, res) => {
   try {
 
     const { goal } = req.body;
-    const userId = req.user.id;
 
-    const career = await Career.findOne({ title: goal });
+    const user = await User.findById(req.user.id);
 
-    if (!career) {
-      return res.status(404).json({
-        message: "Career roadmap not found"
-      });
-    }
+    const userSkills = user.skills || [];
 
-    const roadmap = career.roadmap;
+    const roadmap = generateRoadmap(goal, userSkills);
 
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found"
-      });
-    }
-
-    /* Initialize roadmap progress */
+    /* Initialize roadmap progress ONLY if not exists */
 
     if (!user.roadmapProgress || user.roadmapProgress.goal !== goal) {
 
@@ -46,9 +34,10 @@ router.post("/", protect, async (req, res) => {
     }
 
     const completed = user.roadmapProgress.completedPhases || [];
+
     const current = user.roadmapProgress.currentPhase || 1;
 
-    const phases = roadmap.map((phase) => {
+    const phases = roadmap.phases.map((phase) => {
 
       let status = "locked";
 
@@ -60,15 +49,15 @@ router.post("/", protect, async (req, res) => {
       }
 
       return {
-        ...phase._doc,
+        ...phase,
         status
       };
 
     });
 
     res.json({
-      goal: career.title,
-      title: career.title,
+      goal,
+      title: roadmap.title,
       phases
     });
 
@@ -91,41 +80,33 @@ router.post("/complete-phase", protect, async (req, res) => {
   try {
 
     const { goal, phaseNumber } = req.body;
-    const userId = req.user.id;
 
-    const user = await User.findById(userId);
+    const user = await User.findById(req.user.id);
 
-    if (!user || !user.roadmapProgress) {
-      return res.status(400).json({
-        message: "Roadmap not initialized"
-      });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const completed = user.roadmapProgress.completedPhases;
+    if (!user.roadmapProgress || user.roadmapProgress.goal !== goal) {
 
-    if (!completed.includes(phaseNumber)) {
-      completed.push(phaseNumber);
+      user.roadmapProgress = {
+        goal,
+        completedPhases: [],
+        currentPhase: 1
+      };
+
+    }
+
+    if (!user.roadmapProgress.completedPhases.includes(phaseNumber)) {
+      user.roadmapProgress.completedPhases.push(phaseNumber);
     }
 
     user.roadmapProgress.currentPhase = phaseNumber + 1;
 
-    const career = await Career.findOne({ title: goal });
-
-    const totalPhases = career.roadmap.length;
-
-    const progressPercent =
-      Math.round((completed.length / totalPhases) * 100);
-
     await user.save();
 
     res.json({
-      message: "Phase completed successfully",
-      progress: {
-        goal,
-        completedPhases: completed,
-        currentPhase: user.roadmapProgress.currentPhase,
-        progressPercent
-      }
+      message: "Phase completed successfully"
     });
 
   } catch (error) {
@@ -149,18 +130,18 @@ router.get("/user-progress", protect, async (req, res) => {
     const user = await User.findById(req.user.id);
 
     if (!user || !user.roadmapProgress) {
+
       return res.status(404).json({
         message: "No roadmap progress found"
       });
+
     }
 
     const goal = user.roadmapProgress.goal;
 
-    const career = await Career.findOne({ title: goal });
+    const completed = user.roadmapProgress.completedPhases || [];
 
-    const totalPhases = career.roadmap.length;
-
-    const completed = user.roadmapProgress.completedPhases;
+    const totalPhases = 3;
 
     const progressPercent =
       Math.round((completed.length / totalPhases) * 100);

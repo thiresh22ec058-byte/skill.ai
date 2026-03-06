@@ -1,120 +1,436 @@
-import express from "express";
-import User from "../models/User.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import Navbar from "../components/Navbar";
 
-const router = express.Router();
+function Profile() {
+  const token = localStorage.getItem("token");
 
-/* ================= GET PROFILE ================= */
+  const [profile, setProfile] = useState(null);
+  const [editMode, setEditMode] = useState(false);
 
-router.get("/", protect, async (req, res) => {
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("");
+  const [profilePhoto, setProfilePhoto] = useState("");
 
+  const [newTitle, setNewTitle] = useState("");
+  const [newLink, setNewLink] = useState("");
+  const [projectType, setProjectType] = useState("software");
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  /* ================= FETCH PROFILE ================= */
+  const fetchProfile = async () => {
+    try {
+      const res = await axios.get(
+        "http://localhost:5000/api/users/me",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setProfile(res.data);
+      setName(res.data.name || "");
+      setRole(res.data.role || "");
+      setProfilePhoto(res.data.profilePhoto || "");
+    } catch (err) {
+      console.error("Profile Fetch Error:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  /* ================= PROFILE IMAGE UPLOAD ================= */
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+
+    reader.onloadend = () => {
+      setProfilePhoto(reader.result);
+    };
+
+    if (file) reader.readAsDataURL(file);
+  };
+
+  /* ================= SAVE PROFILE ================= */
+  const saveProfile = async () => {
+    try {
+      await axios.put(
+        "http://localhost:5000/api/profile/update-profile",
+        { name, role, profilePhoto },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setEditMode(false);
+      fetchProfile();
+    } catch (err) {
+      console.error("Save Profile Error:", err);
+    }
+  };
+
+  /* ================= PROJECT FILE UPLOAD ================= */
+  const handleProjectFile = (e) => {
+    setSelectedFile(e.target.files[0]);
+  };
+
+  /* ================= ADD PROJECT ================= */
+const addProject = async () => {
   try {
 
-    const user = await User.findById(req.user.id).select("-password");
+    if (!newTitle) return;
 
-    res.json(user);
-
-  } catch (error) {
-
-    console.error("Profile Fetch Error:", error);
-
-    res.status(500).json({ message: "Server Error" });
-
-  }
-
-});
-
-
-/* ================= UPDATE PROFILE ================= */
-
-router.put("/update-profile", protect, async (req, res) => {
-
-  try {
-
-    const { name, role, profilePhoto } = req.body;
-
-    const user = await User.findById(req.user.id);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    if (projectType === "hardware" && !selectedFile) {
+      alert("Please select a file for hardware project");
+      return;
     }
 
-    user.name = name || user.name;
-    user.role = role || user.role;
-    user.profilePhoto = profilePhoto || user.profilePhoto;
+    const formData = new FormData();
+    formData.append("title", newTitle);
+    formData.append("type", projectType);
 
-    await user.save();
+    if (projectType === "software") {
 
-    res.json({ message: "Profile updated successfully" });
+      if (!newLink) {
+        alert("Please enter project link");
+        return;
+      }
 
-  } catch (error) {
+      formData.append("link", newLink);
 
-    console.error("Update Profile Error:", error);
+    } else {
 
-    res.status(500).json({ message: "Server Error" });
+      formData.append("file", selectedFile);
 
-  }
+    }
 
-});
+    await axios.post(
+      "http://localhost:5000/api/profile/add-project",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data"
+        }
+      }
+    );
 
+    setNewTitle("");
+    setNewLink("");
+    setSelectedFile(null);
 
-/* ================= ADD PROJECT ================= */
+    fetchProfile();
 
-router.post("/add-project", protect, async (req, res) => {
+  } catch (err) {
 
-  try {
-
-    const { title, link } = req.body;
-
-    const user = await User.findById(req.user.id);
-
-    if (!user.projects) user.projects = [];
-
-    user.projects.push({
-      title,
-      link
-    });
-
-    await user.save();
-
-    res.json({ message: "Project added successfully" });
-
-  } catch (error) {
-
-    console.error("Add Project Error:", error);
-
-    res.status(500).json({ message: "Server Error" });
+    console.error("Add Project Error:", err.response?.data || err.message);
+    alert("Failed to add project");
 
   }
+};
 
-});
+  /* ================= DELETE PROJECT ================= */
+  const deleteProject = async (index) => {
+    try {
+      await axios.delete(
+        `http://localhost:5000/api/profile/delete-project/${index}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
 
+      fetchProfile();
+    } catch (err) {
+      console.error("Delete Project Error:", err);
+    }
+  };
 
-/* ================= DELETE PROJECT ================= */
+  if (!profile) return <div>Loading...</div>;
 
-router.delete("/delete-project/:index", protect, async (req, res) => {
+  return (
+    <>
+      <Navbar />
 
-  try {
+      <div
+        style={{
+          minHeight: "100vh",
+          padding: "60px 20px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center"
+        }}
+      >
 
-    const user = await User.findById(req.user.id);
+        {/* ================= PROFILE CARD ================= */}
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "900px",
+            background: "linear-gradient(135deg,#111827,#1f2937)",
+            padding: "30px",
+            borderRadius: "18px",
+            marginBottom: "30px"
+          }}
+        >
+          <div style={{ display: "flex", gap: "30px" }}>
+            <div>
+              <img
+                src={profilePhoto || "https://via.placeholder.com/140"}
+                alt="profile"
+                style={{
+                  width: "140px",
+                  height: "140px",
+                  borderRadius: "50%",
+                  objectFit: "cover"
+                }}
+              />
 
-    const index = req.params.index;
+              {editMode && (
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  style={{ marginTop: "10px" }}
+                />
+              )}
+            </div>
 
-    user.projects.splice(index, 1);
+            <div style={{ flex: 1 }}>
+              {editMode ? (
+                <>
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    style={{
+                      fontSize: "24px",
+                      marginBottom: "10px",
+                      width: "100%"
+                    }}
+                  />
 
-    await user.save();
+                  <select
+                    value={role}
+                    onChange={(e) => setRole(e.target.value)}
+                    style={{
+                      padding: "6px",
+                      marginBottom: "15px"
+                    }}
+                  >
+                    <option>Student</option>
+                    <option>Fresher</option>
+                    <option>Working Professional</option>
+                  </select>
 
-    res.json({ message: "Project deleted successfully" });
+                  <button
+                    onClick={saveProfile}
+                    style={{
+                      padding: "8px 18px",
+                      background: "#16a34a",
+                      border: "none",
+                      borderRadius: "8px",
+                      color: "white",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Save Changes
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h2>{profile.name}</h2>
+                  <p style={{ color: "#9ca3af" }}>{profile.role}</p>
+                  <p style={{ color: "#facc15" }}>{profile.careerGoal}</p>
 
-  } catch (error) {
+                  <button
+                    onClick={() => setEditMode(true)}
+                    style={{
+                      marginTop: "10px",
+                      padding: "6px 14px",
+                      background: "#2563eb",
+                      border: "none",
+                      borderRadius: "8px",
+                      color: "white",
+                      cursor: "pointer"
+                    }}
+                  >
+                    Edit Profile
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
 
-    console.error("Delete Project Error:", error);
+        {/* ================= LEARNING ROADMAP ================= */}
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "900px",
+            background: "linear-gradient(135deg,#111827,#1f2937)",
+            padding: "25px",
+            borderRadius: "18px",
+            marginBottom: "30px"
+          }}
+        >
+          <h3>Learning Roadmap</h3>
 
-    res.status(500).json({ message: "Server Error" });
+          {profile.roadmapProgress?.length === 0 && (
+            <p style={{ color: "#9ca3af" }}>No roadmap yet</p>
+          )}
 
-  }
+         {profile.roadmapProgress ? (
+  <div style={{ marginTop: "8px" }}>
+    <strong>Goal:</strong> {profile.roadmapProgress.goal}
+    <br />
+    <strong>Current Phase:</strong> {profile.roadmapProgress.currentPhase}
+    <br />
+    <strong>Completed Phases:</strong>{" "}
+    {profile.roadmapProgress.completedPhases?.join(", ") || "None"}
+  </div>
+) : (
+  <p style={{ color: "#9ca3af" }}>No roadmap yet</p>
+)}
+        </div>
 
-});
+        {/* ================= PROJECT SECTION ================= */}
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "900px",
+            background: "linear-gradient(135deg,#111827,#1f2937)",
+            padding: "25px",
+            borderRadius: "18px"
+          }}
+        >
+          <h3>My Projects</h3>
 
+          {profile.projects?.map((p, i) => (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: "10px",
+                padding: "10px",
+                background: "#1f2937",
+                borderRadius: "8px"
+              }}
+            >
+              <span>{p.title}</span>
 
-export default router;
+              <div style={{ display: "flex", gap: "10px" }}>
+
+                {p.link && (
+                  <a
+                    href={p.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: "#3b82f6" }}
+                  >
+                    View
+                  </a>
+                )}
+
+                {p.file && (
+                  <a
+                    href={`http://localhost:5000${p.file}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: "#3b82f6" }}
+                  >
+                    View File
+                  </a>
+                )}
+
+                <button
+                  onClick={() => deleteProject(i)}
+                  style={{
+                    background: "#dc2626",
+                    border: "none",
+                    padding: "5px 10px",
+                    borderRadius: "6px",
+                    color: "white",
+                    cursor: "pointer"
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {/* Add Project Form */}
+          <div style={{ marginTop: "20px" }}>
+            <input
+              placeholder="Project Title"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                marginBottom: "10px",
+                borderRadius: "6px"
+              }}
+            />
+
+            <select
+              value={projectType}
+              onChange={(e) => setProjectType(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px",
+                marginBottom: "10px",
+                borderRadius: "6px"
+              }}
+            >
+              <option value="software">Software Project</option>
+              <option value="hardware">Hardware Project</option>
+            </select>
+
+            {projectType === "software" ? (
+              <input
+                placeholder="Project Link"
+                value={newLink}
+                onChange={(e) => setNewLink(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  marginBottom: "10px",
+                  borderRadius: "6px"
+                }}
+              />
+            ) : (
+              <>
+                <input
+                  type="file"
+                  accept=".pdf,.ppt,.pptx,.jpg,.png,.mp4,.zip"
+                  onChange={handleProjectFile}
+                  style={{ marginBottom: "5px" }}
+                />
+
+                <p style={{ fontSize: "13px", color: "#9ca3af" }}>
+                  Only one file allowed (Max 100MB). If you have multiple files,
+                  merge them into a ZIP or single PDF before uploading.
+                </p>
+              </>
+            )}
+
+            <button
+              onClick={addProject}
+              style={{
+                background: "#16a34a",
+                border: "none",
+                padding: "8px 14px",
+                borderRadius: "6px",
+                color: "white",
+                cursor: "pointer"
+              }}
+            >
+              Add Project
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+export default Profile;

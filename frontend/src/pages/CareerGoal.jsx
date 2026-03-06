@@ -12,17 +12,17 @@ function CareerGoal() {
 
   const handleNext = () => {
 
-    const trimmed = goalInput.trim();
+  const trimmed = goalInput.trim();
 
-    if (!trimmed) return;
+  if (!trimmed) return;
 
-    localStorage.setItem("careerGoal", goal);
+  localStorage.setItem("careerGoal", trimmed);
 
-navigate("/skills", {
-  state: { careerGoal: goal }
-});
+  navigate("/skills", {
+    state: { careerGoal: trimmed }
+  });
 
-  };
+};
 
   return (
 
@@ -41,7 +41,6 @@ navigate("/skills", {
           Tell us your dream career. SkillAI will generate your roadmap.
         </p>
 
-        {/* Career Input */}
         <input
           type="text"
           placeholder="Example: AI Engineer, Web Developer, Data Scientist"

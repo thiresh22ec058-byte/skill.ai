@@ -49,6 +49,18 @@ const roadmapProgressSchema = new mongoose.Schema(
   { _id: false }
 );
 
+/* ================= PROJECT SCHEMA ================= */
+
+const projectSchema = new mongoose.Schema(
+  {
+    title: String,
+    type: String,
+    link: String,
+    file: String
+  },
+  { _id: false }
+);
+
 /* ================= USER SCHEMA ================= */
 
 const userSchema = new mongoose.Schema(
@@ -116,6 +128,14 @@ const userSchema = new mongoose.Schema(
       type: roadmapProgressSchema,
       default: () => ({}),
     },
+
+    /* ===== PROJECTS (FIX FOR YOUR ERROR) ===== */
+
+    projects: {
+      type: [projectSchema],
+      default: []
+    }
+
   },
   { timestamps: true }
 );

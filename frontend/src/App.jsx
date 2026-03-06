@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+
 import Welcome from "./pages/Welcome";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
@@ -16,19 +17,29 @@ function App() {
   return (
     <Router>
       <Routes>
+
+        {/* Home Routes */}
         <Route path="/" element={<Welcome />} />
+        <Route path="/home" element={<Welcome />} />
         <Route path="/welcome" element={<Welcome />} />
+
+        {/* Auth */}
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+
+        {/* Setup Flow */}
         <Route path="/usertype" element={<UserType />} />
         <Route path="/careergoal" element={<CareerGoal />} />
-         <Route path="/skills" element={<SkillInput />} />
+        <Route path="/skills" element={<SkillInput />} />
         <Route path="/summary" element={<Summary />} />
+
+        {/* Main App */}
         <Route path="/roadmap" element={<Roadmap />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/jobready" element={<JobReady />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/jobs" element={<Jobs />} />
+
       </Routes>
     </Router>
   );

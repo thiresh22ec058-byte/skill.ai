@@ -12,14 +12,11 @@ function Roadmap() {
 
   const token = localStorage.getItem("token");
 
-  /* fallback if careerGoal was not stored */
   const goal = localStorage.getItem("careerGoal") || "AI Engineer";
 
   const headers = {
     Authorization: `Bearer ${token}`
   };
-
-  /* ================= FETCH ROADMAP ================= */
 
   const fetchRoadmap = async () => {
 
@@ -31,21 +28,15 @@ function Roadmap() {
         { headers }
       );
 
-      /* FIX: backend returns res.data, not res.data.roadmap */
-
       if (res.data) {
         setRoadmap(res.data);
       }
 
     } catch (err) {
-
       console.error("Roadmap Fetch Error:", err);
-
     }
 
   };
-
-  /* ================= FETCH USER PROGRESS ================= */
 
   const fetchProgress = async () => {
 
@@ -59,14 +50,10 @@ function Roadmap() {
       setProgressData(res.data);
 
     } catch (err) {
-
       console.error("Progress Fetch Error:", err);
-
     }
 
   };
-
-  /* ================= LOAD DATA ================= */
 
   useEffect(() => {
 
@@ -76,8 +63,6 @@ function Roadmap() {
     fetchProgress();
 
   }, [token]);
-
-  /* ================= COMPLETE PHASE ================= */
 
   const markComplete = async (phaseNumber) => {
 
@@ -102,8 +87,6 @@ function Roadmap() {
     }
 
   };
-
-  /* ================= LOADING ================= */
 
   if (!roadmap || !roadmap.phases) {
 
@@ -210,7 +193,7 @@ function Roadmap() {
 
                 </div>
 
-                {playlist && (
+                {playlist && phase.status !== "locked" && (
 
                   <a
                     href={playlist}

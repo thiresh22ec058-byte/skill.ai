@@ -1,163 +1,99 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function Summary() {
 
+  const location = useLocation();
   const navigate = useNavigate();
-  const [analysis, setAnalysis] = useState(null);
 
-  /* ================= LOAD ANALYSIS ================= */
-  useEffect(() => {
+  const data = location.state || {};
 
-    const stored = localStorage.getItem("analysis");
+  const goal = data.goal || "Unknown Goal";
 
-    if (!stored) {
-      navigate("/");
-      return;
-    }
-
-    try {
-
-      const parsed = JSON.parse(stored);
-
-      if (!parsed || typeof parsed !== "object") {
-        navigate("/");
-        return;
-      }
-
-      setAnalysis(parsed);
-
-    } catch (error) {
-
-      console.error("Invalid analysis data:", error);
-      navigate("/");
-
-    }
-
-  }, [navigate]);
-
-  /* ================= LOADING STATE ================= */
-  if (!analysis) {
-    return <div>Loading...</div>;
-  }
-
-  /* ================= SAFE DATA EXTRACTION ================= */
-
-  const career =
-    analysis?.career ||
-    analysis?.bestCareer?.title ||
-    "Unknown Career";
-
-  const skillsHave = Array.isArray(analysis?.skillsHave)
-    ? analysis.skillsHave
-    : Array.isArray(analysis?.detectedSkills)
-    ? analysis.detectedSkills
+  const skillsYouHave = Array.isArray(data.skillsYouHave)
+    ? data.skillsYouHave
     : [];
 
-  const skillsMissing = Array.isArray(analysis?.skillsMissing)
-    ? analysis.skillsMissing
-    : Array.isArray(analysis?.skillGaps)
-    ? analysis.skillGaps
+  const missingSkills = Array.isArray(data.missingSkills)
+    ? data.missingSkills
     : [];
 
-  const progress = Number(
-    analysis?.progress ||
-    analysis?.bestCareer?.score ||
-    0
-  );
-
-  /* ================= UI ================= */
+  const readiness = data.readinessScore || 0;
 
   return (
-
     <div className="page-container">
 
       <div className="glass-card">
 
-        <h2 className="hero-title">
+        <h1 className="hero-title">
           Your Skill Analysis
-        </h2>
+        </h1>
 
-        <p>
-          Career Goal: <b>{career}</b>
+        <p style={{ marginTop: "10px" }}>
+          Career Goal: <strong>{goal}</strong>
         </p>
 
-        <h3>
-          Readiness Score: {progress}%
-        </h3>
-
-        {/* Progress Bar */}
+        <p>
+          Readiness Score: <strong>{readiness}%</strong>
+        </p>
 
         <div
           style={{
-            width: "100%",
             height: "10px",
-            background: "#1e293b",
+            background: "rgba(255,255,255,0.1)",
             borderRadius: "10px",
-            marginBottom: "20px"
+            marginTop: "10px",
+            marginBottom: "30px",
+            overflow: "hidden"
           }}
         >
-
           <div
             style={{
-              width: `${progress}%`,
+              width: `${readiness}%`,
               height: "100%",
-              background:
-                "linear-gradient(90deg,#7c3aed,#06b6d4)",
-              borderRadius: "10px"
+              background: "linear-gradient(90deg,#4f46e5,#22d3ee)"
             }}
           />
-
         </div>
 
         {/* Skills You Have */}
 
-        <div className="analysis-card">
+        <h3 style={{ marginBottom: "10px" }}>
+          ✅ Skills You Have
+        </h3>
 
-          <h3>✅ Skills You Have</h3>
-
-          {skillsHave.length > 0 ? (
-
-            <ul>
-              {skillsHave.map((skill, index) => (
-                <li key={index}>{skill}</li>
-              ))}
-            </ul>
-
-          ) : (
-
-            <p>No skills detected</p>
-
-          )}
-
-        </div>
+        {skillsYouHave.length === 0 ? (
+          <p style={{ opacity: 0.7 }}>
+            No matching skills detected
+          </p>
+        ) : (
+          <ul style={{ listStyle: "none", padding: 0 }}>
+  {skillsYouHave.map((skill, index) => (
+    <li key={index}>{skill}</li>
+  ))}
+</ul>
+        )}
 
         {/* Missing Skills */}
 
-        <div className="analysis-card">
+        <h3 style={{ marginTop: "25px", marginBottom: "10px" }}>
+          ❌ Skills Missing for Your Goal
+        </h3>
 
-          <h3>❌ Skills Missing for Your Goal</h3>
-
-          {skillsMissing.length > 0 ? (
-
-            <ul>
-              {skillsMissing.map((skill, index) => (
-                <li key={index}>{skill}</li>
-              ))}
-            </ul>
-
-          ) : (
-
-            <p>No missing skills 🎉</p>
-
-          )}
-
-        </div>
-
-        {/* Navigate to Roadmap */}
+        {missingSkills.length === 0 ? (
+          <p style={{ opacity: 0.7 }}>
+            No missing skills detected
+          </p>
+        ) : (
+          <ul style={{ listStyle: "none", padding: 0 }}>
+  {missingSkills.map((skill, index) => (
+    <li key={index}>{skill}</li>
+  ))}
+</ul>
+        )}
 
         <button
           className="primary-btn"
+          style={{ marginTop: "35px" }}
           onClick={() => navigate("/roadmap")}
         >
           Start Learning →
@@ -166,7 +102,6 @@ function Summary() {
       </div>
 
     </div>
-
   );
 }
 

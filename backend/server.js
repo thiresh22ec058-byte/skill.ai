@@ -75,6 +75,7 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/job-readiness", jobReadinessRoutes);
 app.use("/api/resume", resumeRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/uploads", express.static("uploads"));
 
 /* ===== PROGRESS TRACKER ROUTE ===== */
 

@@ -1,19 +1,39 @@
 import express from "express";
 import multer from "multer";
-import { analyzeCareer, analyzeCareerFromPDF } from "../controllers/aiController.js";
-
-console.log("AI ROUTES LOADED");
+import {
+  analyzeCareer,
+  analyzeCareerFromPDF
+} from "../controllers/aiController.js";
 
 const router = express.Router();
 
-const upload = multer({ dest: "uploads/" });
+/* ================= FILE UPLOAD ================= */
 
-router.get("/test", (req, res) => {
-  res.json({ message: "AI route working" });
+const upload = multer({
+  dest: "uploads/"
 });
 
-router.post("/analyze-career", analyzeCareer);
+/* ================= TEST ROUTE ================= */
 
-router.post("/analyze-resume", upload.single("resume"), analyzeCareerFromPDF);
+router.get("/test", (req, res) => {
+  res.json({
+    message: "AI route working"
+  });
+});
+
+/* ================= CAREER ANALYSIS ================= */
+
+router.post(
+  "/analyze-career",
+  analyzeCareer
+);
+
+/* ================= RESUME ANALYSIS ================= */
+
+router.post(
+  "/analyze-resume",
+  upload.single("resume"),
+  analyzeCareerFromPDF
+);
 
 export default router;

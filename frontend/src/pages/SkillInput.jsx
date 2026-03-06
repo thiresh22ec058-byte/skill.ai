@@ -14,11 +14,19 @@ function SkillInput() {
   const [loading, setLoading] = useState(false);
 
   /* ================= REDIRECT IF NO GOAL ================= */
-  useEffect(() => {
-    if (!careerGoal) {
-      navigate("/");
+useEffect(() => {
+
+  if (!careerGoal) {
+
+    const storedGoal = localStorage.getItem("careerGoal");
+
+    if (!storedGoal) {
+      navigate("/careergoal");
     }
-  }, [careerGoal, navigate]);
+
+  }
+
+}, [careerGoal, navigate]);
 
   /* ================= ADD SKILL ================= */
   const addSkill = () => {
@@ -61,7 +69,7 @@ function SkillInput() {
         return;
       }
 
-      /* 1️⃣ Try to Save Skills to MongoDB (safe attempt) */
+      /* Save user skills */
       try {
 
         await axios.put(
@@ -83,42 +91,41 @@ function SkillInput() {
 
       }
 
-      /* 2️⃣ Decode JWT Token */
-      let userId;
-
-      try {
-
-        const payload = JSON.parse(
-          atob(token.split(".")[1])
-        );
-
-        userId = payload.id;
-
-      } catch {
-
-        alert("Invalid session. Please login again.");
-        navigate("/login");
-        return;
-
-      }
-
-      /* 3️⃣ Call Analyze API */
+      /* Call AI analyze API */
       const analyzeResponse = await axios.post(
-"http://localhost:5000/api/ai/analyze-career",
-{
-resumeText: skills.join(" ")
-}
-);
-
-      /* 4️⃣ Save analysis result */
-      localStorage.setItem(
-        "analysis",
-        JSON.stringify(analyzeResponse.data)
+        "http://localhost:5000/api/ai/analyze-career",
+        {
+          resumeText: skills.join(" "),
+          goal: careerGoal
+        }
       );
 
-      /* 5️⃣ Navigate to summary page */
-      navigate("/summary");
+      const analysis = analyzeResponse.data;
 
+      /*
+        Save EVERYTHING needed for later pages
+      */
+
+      localStorage.setItem("careerGoal", careerGoal);
+        localStorage.setItem(
+        "analysis",
+        JSON.stringify({
+          skillsYouHave: skills, // EXACT USER INPUT
+          missingSkills: analysis.missingSkills || [],
+          readinessScore: analysis.readinessScore || 0,
+          goal: careerGoal
+        })
+      );
+
+      /* Go to summary */
+     navigate("/summary", {
+  state: {
+    goal: careerGoal,
+    skillsYouHave: skills,
+    missingSkills: analysis.missingSkills || [],
+    readiness: analysis.readinessScore || 0
+  }
+});
     } catch (error) {
 
       console.error(
