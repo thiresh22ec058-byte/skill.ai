@@ -18,7 +18,7 @@ router.post("/", protect, async (req, res) => {
 
     const userSkills = user.skills || [];
 
-    const roadmap = generateRoadmap(goal, userSkills);
+    const roadmap = await generateRoadmap(goal, userSkills);
 
     /* Initialize roadmap progress ONLY if not exists */
 

@@ -29,6 +29,23 @@ export const analyzeCareer = async (req, res) => {
       .map(skill => skill.trim())
       .filter(Boolean);
 
+    // Normalize skills using synonyms
+    const normalizedSkills = new Set(userSkills);
+
+    for (const mainSkill in skillSynonyms) {
+
+      const synonyms = skillSynonyms[mainSkill];
+
+      if (synonyms.some(s =>
+        userSkills.includes(s.toLowerCase())
+      )) {
+        normalizedSkills.add(mainSkill.toLowerCase());
+      }
+
+    }
+
+    userSkills = Array.from(normalizedSkills);
+
     // Expand synonyms
     const expandedSkills = new Set(userSkills);
 
@@ -46,7 +63,10 @@ export const analyzeCareer = async (req, res) => {
 
     // Match skills
     const matchedSkills = requiredSkills.filter(skill =>
-      expandedSkills.has(skill.toLowerCase())
+      userSkills.some(userSkill =>
+        userSkill.includes(skill.toLowerCase()) ||
+        skill.toLowerCase().includes(userSkill)
+      )
     );
 
     // Missing skills
@@ -55,13 +75,13 @@ export const analyzeCareer = async (req, res) => {
     );
 
     // Readiness score
-    const readinessScore =
-      requiredSkills.length === 0
-        ? 0
-        : Math.round(
-            (matchedSkills.length /
-              requiredSkills.length) * 100
-          );
+    let readinessScore = 0;
+
+    if (requiredSkills.length > 0) {
+      readinessScore = Math.round(
+        (matchedSkills.length / requiredSkills.length) * 100
+      );
+    }
 
     res.json({
       goal: normalizedGoal,
@@ -94,9 +114,6 @@ export const analyzeCareerFromPDF = async (req, res) => {
         message: "No resume file uploaded"
       });
     }
-
-    // For now we only confirm upload works
-    // Later we will extract PDF text
 
     res.json({
       message: "Resume uploaded successfully",

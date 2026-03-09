@@ -1,7 +1,6 @@
-// backend/services/roadmapService.js
-
 import OpenAI from "openai";
 import { domainSkills, normalizeGoal } from "../config/careerDomains.js";
+import { getBestPlaylist } from "./youtubeService.js";
 
 /* ================= OPENAI CLIENT ================= */
 
@@ -87,59 +86,33 @@ Return ONLY valid JSON.
 
 };
 
-/* ================= YOUTUBE VIDEO BUILDER ================= */
+/* ================= YOUTUBE PLAYLIST FETCHER ================= */
 
-const buildPlaylist = (topics) => {
+const buildPlaylist = async (topics, goal) => {
 
   if (!topics || topics.length === 0) return null;
 
-  const topic = topics[0].toLowerCase();
+  const topic = topics[0];
 
-  const videoMap = {
+  try {
 
-    programming: "https://www.youtube.com/watch?v=zOjov-2OZ0E",
-    python: "https://www.youtube.com/watch?v=_uQrJ0TkZlc",
-    javascript: "https://www.youtube.com/watch?v=PkZNo7MFNFg",
-    html: "https://www.youtube.com/watch?v=qz0aGYrrlhU",
-    css: "https://www.youtube.com/watch?v=1Rs2ND1ryYc",
-    react: "https://www.youtube.com/watch?v=bMknfKXIFA8",
+    const playlist = await getBestPlaylist(topic, goal);
 
-    machine: "https://www.youtube.com/watch?v=Gv9_4yMHFhI",
-    data: "https://www.youtube.com/watch?v=ua-CiDNNj30",
+    return playlist;
 
-    networking: "https://www.youtube.com/watch?v=qiQR5rTSshw",
-    sensors: "https://www.youtube.com/watch?v=Y2KqQ2Z2F6Y",
-    microcontrollers: "https://www.youtube.com/watch?v=F8C1Za2K5qM",
-    embedded: "https://www.youtube.com/watch?v=O9qvYg6g9jE",
-    iot: "https://www.youtube.com/watch?v=6mBO2vqLv38",
+  } catch (error) {
 
-    business: "https://www.youtube.com/watch?v=RjR0GUOAXOU",
-    marketing: "https://www.youtube.com/watch?v=nU-IIXBWlS4",
-    finance: "https://www.youtube.com/watch?v=8S0FDjFBj8o",
-    leadership: "https://www.youtube.com/watch?v=9qV8N2A3tDk",
+    console.error("YouTube Playlist Error:", error);
 
-    ui: "https://www.youtube.com/watch?v=c9Wg6Cb_YlU",
-
-    cybersecurity: "https://www.youtube.com/watch?v=U_P23SqJaDc"
-  };
-
-  for (const key in videoMap) {
-
-    if (topic.includes(key)) {
-      return videoMap[key];
-    }
+    return null;
 
   }
-
-  /* Default programming course */
-
-  return "https://www.youtube.com/watch?v=rfscVS0vtbw";
 
 };
 
 /* ================= STATIC ROADMAP GENERATOR ================= */
 
-export function generateRoadmap(goal, userSkills = []) {
+export async function generateRoadmap(goal, userSkills = []) {
 
   const normalizedGoal = normalizeGoal(goal);
 
@@ -160,6 +133,12 @@ export function generateRoadmap(goal, userSkills = []) {
   const phase2 = missingSkills.slice(phaseSize, phaseSize * 2);
   const phase3 = missingSkills.slice(phaseSize * 2);
 
+  /* Fetch playlists */
+
+  const playlist1 = await buildPlaylist(phase1, normalizedGoal);
+  const playlist2 = await buildPlaylist(phase2, normalizedGoal);
+  const playlist3 = await buildPlaylist(phase3, normalizedGoal);
+
   return {
 
     title: normalizedGoal,
@@ -171,7 +150,7 @@ export function generateRoadmap(goal, userSkills = []) {
         name: "Core Foundations",
         duration: "4 weeks",
         topics: phase1,
-        playlist: buildPlaylist(phase1),
+        playlist: playlist1,
         status: "unlocked"
       },
 
@@ -180,7 +159,7 @@ export function generateRoadmap(goal, userSkills = []) {
         name: "Intermediate Skills",
         duration: "4 weeks",
         topics: phase2,
-        playlist: buildPlaylist(phase2),
+        playlist: playlist2,
         status: "locked"
       },
 
@@ -189,7 +168,7 @@ export function generateRoadmap(goal, userSkills = []) {
         name: "Advanced Concepts",
         duration: "4 weeks",
         topics: phase3,
-        playlist: buildPlaylist(phase3),
+        playlist: playlist3,
         status: "locked"
       }
 

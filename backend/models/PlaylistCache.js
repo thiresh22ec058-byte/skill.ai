@@ -1,21 +1,23 @@
 import mongoose from "mongoose";
 
-const videoSchema = new mongoose.Schema({
-  title: String,
-  videoId: String,
-  duration: Number
-});
-
-const weekSchema = new mongoose.Schema({
-  week: Number,
-  totalDuration: Number,
-  videos: [videoSchema]
-});
-
 const playlistCacheSchema = new mongoose.Schema({
-  goal: String,
-  playlistId: String,        // ✅ IMPORTANT
-  roadmap: [weekSchema]
+
+  query: {
+    type: String,
+    required: true,
+    unique: true
+  },
+
+  url: {
+    type: String,
+    required: true
+  },
+
+  createdAt: {
+    type: Date,
+    default: Date.now
+  }
+
 });
 
 export default mongoose.model("PlaylistCache", playlistCacheSchema);

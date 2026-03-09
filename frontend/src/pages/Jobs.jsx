@@ -9,8 +9,10 @@ function Jobs() {
 
   const [profile, setProfile] = useState(null);
   const [jobRoles, setJobRoles] = useState([]);
+  const [readiness, setReadiness] = useState(0);
 
   const token = localStorage.getItem("token");
+  const goal = localStorage.getItem("careerGoal");
 
   /* ================= FETCH PROFILE ================= */
 
@@ -56,16 +58,19 @@ function Jobs() {
       try {
 
         const res = await axios.get(
-          "http://localhost:5000/api/jobs",
+          "http://localhost:5000/api/recommend",
           {
             params: {
-              readiness: profile?.stats?.jobReadinessPercent || 0,
-              domain: profile?.careerGoal
+              goal
+            },
+            headers: {
+              Authorization: `Bearer ${token}`
             }
           }
         );
 
-        setJobRoles(res.data);
+        setJobRoles(res.data.jobs || []);
+        setReadiness(res.data.readiness || 0);
 
       } catch (err) {
 
@@ -77,9 +82,12 @@ function Jobs() {
 
     fetchJobs();
 
-  }, [profile]);
+  }, [profile, goal, token]);
+
+  /* ================= LOADING ================= */
 
   if (!profile) {
+
     return (
       <>
         <Navbar />
@@ -95,15 +103,15 @@ function Jobs() {
         </div>
       </>
     );
-  }
 
-  const readiness = profile?.stats?.jobReadinessPercent || 0;
+  }
 
   return (
     <>
       <Navbar />
 
       <div className="page-container">
+
         <div className="glass-card">
 
           <h2 className="hero-title">
@@ -202,6 +210,7 @@ function Jobs() {
           </div>
 
         </div>
+
       </div>
     </>
   );

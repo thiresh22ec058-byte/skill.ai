@@ -14,24 +14,26 @@ function SkillInput() {
   const [loading, setLoading] = useState(false);
 
   /* ================= REDIRECT IF NO GOAL ================= */
-useEffect(() => {
 
-  if (!careerGoal) {
+  useEffect(() => {
 
-    const storedGoal = localStorage.getItem("careerGoal");
+    if (!careerGoal) {
 
-    if (!storedGoal) {
-      navigate("/careergoal");
+      const storedGoal = localStorage.getItem("careerGoal");
+
+      if (!storedGoal) {
+        navigate("/careergoal");
+      }
+
     }
 
-  }
-
-}, [careerGoal, navigate]);
+  }, [careerGoal, navigate]);
 
   /* ================= ADD SKILL ================= */
+
   const addSkill = () => {
 
-    const trimmed = skillInput.trim();
+    const trimmed = skillInput.trim().toLowerCase();
 
     if (!trimmed) return;
 
@@ -44,6 +46,7 @@ useEffect(() => {
   };
 
   /* ================= REMOVE SKILL ================= */
+
   const removeSkill = (skillToRemove) => {
 
     setSkills((prev) =>
@@ -53,6 +56,7 @@ useEffect(() => {
   };
 
   /* ================= HANDLE ANALYZE ================= */
+
   const handleAnalyze = async () => {
 
     if (skills.length === 0) return;
@@ -70,6 +74,7 @@ useEffect(() => {
       }
 
       /* Save user skills */
+
       try {
 
         await axios.put(
@@ -91,7 +96,8 @@ useEffect(() => {
 
       }
 
-      /* Call AI analyze API */
+      /* ================= CALL ANALYZE API ================= */
+
       const analyzeResponse = await axios.post(
         "http://localhost:5000/api/ai/analyze-career",
         {
@@ -100,32 +106,33 @@ useEffect(() => {
         }
       );
 
-      const analysis = analyzeResponse.data;
+      const analysis = analyzeResponse?.data || {};
 
-      /*
-        Save EVERYTHING needed for later pages
-      */
+      /* ================= SAVE ANALYSIS ================= */
 
       localStorage.setItem("careerGoal", careerGoal);
-        localStorage.setItem(
+
+      localStorage.setItem(
         "analysis",
         JSON.stringify({
-          skillsYouHave: skills, // EXACT USER INPUT
+          skillsYouHave: skills,
           missingSkills: analysis.missingSkills || [],
           readinessScore: analysis.readinessScore || 0,
           goal: careerGoal
         })
       );
 
-      /* Go to summary */
-     navigate("/summary", {
-  state: {
-    goal: careerGoal,
-    skillsYouHave: skills,
-    missingSkills: analysis.missingSkills || [],
-    readiness: analysis.readinessScore || 0
-  }
-});
+      /* ================= NAVIGATE ================= */
+
+      navigate("/summary", {
+        state: {
+          goal: careerGoal,
+          skillsYouHave: skills,
+          missingSkills: analysis.missingSkills || [],
+          readiness: analysis.readinessScore || 0
+        }
+      });
+
     } catch (error) {
 
       console.error(
@@ -161,6 +168,7 @@ useEffect(() => {
         </p>
 
         {/* Skill Input */}
+
         <div className="skill-input-wrapper">
 
           <input
@@ -184,6 +192,7 @@ useEffect(() => {
         </div>
 
         {/* Skill Chips */}
+
         <div className="skill-chips">
 
           {skills.map((skill) => (
@@ -192,6 +201,7 @@ useEffect(() => {
               key={skill}
               className="chip"
             >
+
               {skill}
 
               <span
@@ -209,6 +219,7 @@ useEffect(() => {
         </div>
 
         {/* Analyze Button */}
+
         <button
           className="primary-btn"
           disabled={

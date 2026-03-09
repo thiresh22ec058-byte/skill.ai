@@ -193,12 +193,13 @@ function Roadmap() {
 
                 </div>
 
+                {/* FIX: Show course link for unlocked + completed phases */}
                 {playlist && phase.status !== "locked" && (
 
                   <a
                     href={playlist}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                     style={{
                       display: "inline-block",
                       marginBottom: "10px",

@@ -17,7 +17,7 @@ function Summary() {
     ? data.missingSkills
     : [];
 
-  const readiness = data.readinessScore || 0;
+  const readiness = data.readiness || 0;   // ✅ FIXED
 
   return (
     <div className="page-container">
@@ -55,8 +55,6 @@ function Summary() {
           />
         </div>
 
-        {/* Skills You Have */}
-
         <h3 style={{ marginBottom: "10px" }}>
           ✅ Skills You Have
         </h3>
@@ -67,13 +65,11 @@ function Summary() {
           </p>
         ) : (
           <ul style={{ listStyle: "none", padding: 0 }}>
-  {skillsYouHave.map((skill, index) => (
-    <li key={index}>{skill}</li>
-  ))}
-</ul>
+            {skillsYouHave.map((skill, index) => (
+              <li key={index}>{skill}</li>
+            ))}
+          </ul>
         )}
-
-        {/* Missing Skills */}
 
         <h3 style={{ marginTop: "25px", marginBottom: "10px" }}>
           ❌ Skills Missing for Your Goal
@@ -85,10 +81,10 @@ function Summary() {
           </p>
         ) : (
           <ul style={{ listStyle: "none", padding: 0 }}>
-  {missingSkills.map((skill, index) => (
-    <li key={index}>{skill}</li>
-  ))}
-</ul>
+            {missingSkills.map((skill, index) => (
+              <li key={index}>{skill}</li>
+            ))}
+          </ul>
         )}
 
         <button

@@ -17,6 +17,10 @@ function Profile() {
   const [projectType, setProjectType] = useState("software");
   const [selectedFile, setSelectedFile] = useState(null);
 
+  /* ===== NEW: GET GOAL FROM LOCAL STORAGE ===== */
+  const selectedGoal =
+    localStorage.getItem("careerGoal") || profile?.careerGoal;
+
   /* ================= FETCH PROFILE ================= */
   const fetchProfile = async () => {
     try {
@@ -72,59 +76,51 @@ function Profile() {
   };
 
   /* ================= ADD PROJECT ================= */
-const addProject = async () => {
-  try {
+  const addProject = async () => {
+    try {
+      if (!newTitle) return;
 
-    if (!newTitle) return;
-
-    if (projectType === "hardware" && !selectedFile) {
-      alert("Please select a file for hardware project");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("title", newTitle);
-    formData.append("type", projectType);
-
-    if (projectType === "software") {
-
-      if (!newLink) {
-        alert("Please enter project link");
+      if (projectType === "hardware" && !selectedFile) {
+        alert("Please select a file for hardware project");
         return;
       }
 
-      formData.append("link", newLink);
+      const formData = new FormData();
+      formData.append("title", newTitle);
+      formData.append("type", projectType);
 
-    } else {
-
-      formData.append("file", selectedFile);
-
-    }
-
-    await axios.post(
-      "http://localhost:5000/api/profile/add-project",
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data"
+      if (projectType === "software") {
+        if (!newLink) {
+          alert("Please enter project link");
+          return;
         }
+
+        formData.append("link", newLink);
+      } else {
+        formData.append("file", selectedFile);
       }
-    );
 
-    setNewTitle("");
-    setNewLink("");
-    setSelectedFile(null);
+      await axios.post(
+        "http://localhost:5000/api/profile/add-project",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data"
+          }
+        }
+      );
 
-    fetchProfile();
+      setNewTitle("");
+      setNewLink("");
+      setSelectedFile(null);
 
-  } catch (err) {
-
-    console.error("Add Project Error:", err.response?.data || err.message);
-    alert("Failed to add project");
-
-  }
-};
+      fetchProfile();
+    } catch (err) {
+      console.error("Add Project Error:", err.response?.data || err.message);
+      alert("Failed to add project");
+    }
+  };
 
   /* ================= DELETE PROJECT ================= */
   const deleteProject = async (index) => {
@@ -157,7 +153,6 @@ const addProject = async () => {
           alignItems: "center"
         }}
       >
-
         {/* ================= PROFILE CARD ================= */}
         <div
           style={{
@@ -236,7 +231,9 @@ const addProject = async () => {
                 <>
                   <h2>{profile.name}</h2>
                   <p style={{ color: "#9ca3af" }}>{profile.role}</p>
-                  <p style={{ color: "#facc15" }}>{profile.careerGoal}</p>
+
+                  {/* ===== FIXED GOAL DISPLAY ===== */}
+                  <p style={{ color: "#facc15" }}>{selectedGoal}</p>
 
                   <button
                     onClick={() => setEditMode(true)}
@@ -275,18 +272,19 @@ const addProject = async () => {
             <p style={{ color: "#9ca3af" }}>No roadmap yet</p>
           )}
 
-         {profile.roadmapProgress ? (
-  <div style={{ marginTop: "8px" }}>
-    <strong>Goal:</strong> {profile.roadmapProgress.goal}
-    <br />
-    <strong>Current Phase:</strong> {profile.roadmapProgress.currentPhase}
-    <br />
-    <strong>Completed Phases:</strong>{" "}
-    {profile.roadmapProgress.completedPhases?.join(", ") || "None"}
-  </div>
-) : (
-  <p style={{ color: "#9ca3af" }}>No roadmap yet</p>
-)}
+          {profile.roadmapProgress ? (
+            <div style={{ marginTop: "8px" }}>
+              <strong>Goal:</strong> {profile.roadmapProgress.goal}
+              <br />
+              <strong>Current Phase:</strong>{" "}
+              {profile.roadmapProgress.currentPhase}
+              <br />
+              <strong>Completed Phases:</strong>{" "}
+              {profile.roadmapProgress.completedPhases?.join(", ") || "None"}
+            </div>
+          ) : (
+            <p style={{ color: "#9ca3af" }}>No roadmap yet</p>
+          )}
         </div>
 
         {/* ================= PROJECT SECTION ================= */}
@@ -317,7 +315,6 @@ const addProject = async () => {
               <span>{p.title}</span>
 
               <div style={{ display: "flex", gap: "10px" }}>
-
                 {p.link && (
                   <a
                     href={p.link}
