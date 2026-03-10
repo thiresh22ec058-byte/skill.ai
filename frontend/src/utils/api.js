@@ -1,41 +1,18 @@
-const API_BASE = "http://localhost:5000/api";
+import axios from "axios";
 
-export const getToken = () => {
-  return localStorage.getItem("token");
-};
+const api = axios.create({
+  baseURL: "http://localhost:5000/api"
+});
 
-export const fetchRoadmap = async (goal) => {
-  const res = await fetch(`${API_BASE}/roadmap`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getToken()}`
-    },
-    body: JSON.stringify({ goal })
-  });
+api.interceptors.request.use((config) => {
 
-  return res.json();
-};
+  const token = localStorage.getItem("token");
 
-export const completePhase = async (goal, phaseNumber) => {
-  const res = await fetch(`${API_BASE}/roadmap/complete-phase`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getToken()}`
-    },
-    body: JSON.stringify({ goal, phaseNumber })
-  });
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
 
-  return res.json();
-};
+  return config;
+});
 
-export const getUserProgress = async () => {
-  const res = await fetch(`${API_BASE}/roadmap/user-progress`, {
-    headers: {
-      Authorization: `Bearer ${getToken()}`
-    }
-  });
-
-  return res.json();
-};
+export default api;

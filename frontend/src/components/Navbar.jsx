@@ -1,59 +1,133 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 function Navbar() {
-  const navigate = useNavigate();
 
-  const logout = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const token = localStorage.getItem("token");
+
+  const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/");
   };
 
+  const btnStyle = {
+    padding: "7px 16px",
+    borderRadius: "10px",
+    border: "1px solid rgba(255,255,255,0.15)",
+    background: "rgba(255,255,255,0.05)",
+    color: "white",
+    cursor: "pointer",
+    fontSize: "14px",
+    transition: "all 0.25s ease"
+  };
+
+  const activeStyle = {
+    background: "#22c55e",
+    color: "white",
+    border: "none"
+  };
+
+  const getStyle = (path) =>
+    location.pathname === path
+      ? { ...btnStyle, ...activeStyle }
+      : btnStyle;
+
   return (
-    <div style={styles.navbar}>
-      <div style={styles.logo}>Skill AI</div>
 
-      <div style={styles.links}>
-        <Link to="/home" style={styles.link}>Home</Link>
-        <Link to="/roadmap" style={styles.link}>Roadmap</Link>
-        <Link to="/profile" style={styles.link}>Profile</Link>
-        <button onClick={logout} style={styles.logout}>Logout</button>
+    <div
+      style={{
+        width: "100%",
+        padding: "14px 40px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        background: "linear-gradient(90deg,#0f172a,#020617)"
+      }}
+    >
+
+      <h2
+        style={{ color: "#60a5fa", cursor: "pointer" }}
+        onClick={() => navigate(token ? "/dashboard" : "/")}
+      >
+        SkillAI
+      </h2>
+
+      <div style={{ display: "flex", gap: "12px" }}>
+
+        {token && (
+          <>
+            <button
+              style={getStyle("/dashboard")}
+              onClick={() => navigate("/dashboard")}
+            >
+              Dashboard
+            </button>
+
+            <button
+              style={getStyle("/profile")}
+              onClick={() => navigate("/profile")}
+            >
+              Profile
+            </button>
+
+            <button
+              style={getStyle("/roadmap")}
+              onClick={() => navigate("/roadmap")}
+            >
+              Roadmap
+            </button>
+
+            <button
+              style={getStyle("/jobs")}
+              onClick={() => navigate("/jobs")}
+            >
+              Jobs
+            </button>
+
+            <button
+              style={getStyle("/resume-builder")}
+              onClick={() => navigate("/resume-builder")}
+            >
+              Resume
+            </button>
+
+            <button
+              style={getStyle("/skill-gap")}
+              onClick={() => navigate("/skill-gap")}
+            >
+              Skill Gap
+            </button>
+
+            <button
+              style={getStyle("/ai-chat")}
+              onClick={() => navigate("/ai-chat")}
+            >
+              AI Chat
+            </button>
+
+            <button
+              onClick={handleLogout}
+              style={{
+                padding: "7px 16px",
+                borderRadius: "10px",
+                border: "none",
+                background: "#ef4444",
+                color: "white",
+                cursor: "pointer"
+              }}
+            >
+              Logout
+            </button>
+          </>
+        )}
+
       </div>
-    </div>
-  );
-}
 
-const styles = {
-  navbar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "15px 40px",
-    background: "#0f172a",
-    borderBottom: "1px solid rgba(255,255,255,0.1)"
-  },
-  logo: {
-    fontSize: "20px",
-    fontWeight: "bold",
-    color: "#4fa3ff"
-  },
-  links: {
-    display: "flex",
-    gap: "20px",
-    alignItems: "center"
-  },
-  link: {
-    textDecoration: "none",
-    color: "white",
-    fontWeight: "500"
-  },
-  logout: {
-    background: "#ef4444",
-    border: "none",
-    padding: "6px 12px",
-    color: "white",
-    borderRadius: "5px",
-    cursor: "pointer"
-  }
-};
+    </div>
+
+  );
+
+}
 
 export default Navbar;

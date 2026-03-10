@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 
 function Welcome() {
+
   const navigate = useNavigate();
   const aboutRef = useRef(null);
   const contactRef = useRef(null);
@@ -12,35 +13,10 @@ function Welcome() {
   };
 
   return (
-    
+
     <div className="landing-container">
 
-      <nav className="navbar">
-        <div 
-          className="logo"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        >
-          SkillAI
-        </div>
-
-        <div className="nav-links">
-          <span onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-            Home
-          </span>
-
-          <span onClick={() => scrollToSection(aboutRef)}>
-            About
-          </span>
-
-          <span onClick={() => scrollToSection(contactRef)}>
-            Contact
-          </span>
-
-          <span onClick={() => navigate("/login")}>
-            Login
-          </span>
-        </div>
-      </nav>
+      <Navbar />
 
       <div className="hero-section">
         <h1 className="hero-title">
@@ -52,7 +28,7 @@ function Welcome() {
           follow a structured roadmap, and become job-ready.
         </p>
 
-        <button 
+        <button
           className="primary-btn"
           onClick={() => navigate("/usertype")}
         >
@@ -74,6 +50,7 @@ function Welcome() {
       </div>
 
     </div>
+
   );
 }
 

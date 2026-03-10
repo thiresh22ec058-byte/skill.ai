@@ -3,16 +3,23 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 function Login() {
+
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+
     try {
+
       if (!email || !password) {
-        return alert("Please enter email and password");
+        alert("Please enter email and password");
+        return;
       }
+
+      setLoading(true);
 
       const response = await axios.post(
         "http://localhost:5000/api/users/login",
@@ -22,21 +29,46 @@ function Login() {
         }
       );
 
-      localStorage.setItem("token", response.data.token);
+      const token = response.data?.token;
+
+      if (!token) {
+        alert("Login failed. Token missing.");
+        return;
+      }
+
+      // Save token
+      localStorage.setItem("token", token);
+
+      console.log("Saved token:", token);
 
       alert("Login Successful!");
 
-      // 🔥 IMPORTANT — go to Welcome first
+      // Redirect to welcome
       navigate("/welcome");
 
     } catch (error) {
-      alert(error.response?.data?.message || "Login failed");
+
+      console.error("Login Error:", error);
+
+      alert(
+        error.response?.data?.message ||
+        "Login failed. Please try again."
+      );
+
+    } finally {
+
+      setLoading(false);
+
     }
+
   };
 
   return (
+
     <div className="auth-container">
+
       <div className="auth-card">
+
         <h2>Login</h2>
 
         <input
@@ -55,8 +87,12 @@ function Login() {
           className="auth-input"
         />
 
-        <button onClick={handleLogin} className="primary-btn">
-          Login
+        <button
+          onClick={handleLogin}
+          className="primary-btn"
+          disabled={loading}
+        >
+          {loading ? "Logging in..." : "Login"}
         </button>
 
         <p
@@ -65,9 +101,13 @@ function Login() {
         >
           Don't have account? Register
         </p>
+
       </div>
+
     </div>
+
   );
+
 }
 
 export default Login;

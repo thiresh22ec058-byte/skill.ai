@@ -628,3 +628,50 @@ body::after {
   color: white;
   cursor: pointer;
 }
+
+
+.job-card {
+  margin-top:20px;
+  padding:25px;
+  border-radius:15px;
+  background:rgba(255,255,255,0.05);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.08);
+}
+
+.job-landing{
+padding:40px;
+max-width:900px;
+margin:auto;
+}
+
+.jobs-scroll{
+margin-top:30px;
+max-height:500px;
+overflow-y:auto;
+padding-right:10px;
+}
+
+.jobs-scroll::-webkit-scrollbar{
+width:6px;
+}
+
+.jobs-scroll::-webkit-scrollbar-thumb{
+background:#4f46e5;
+border-radius:10px;
+}
+
+.job-card{
+margin-top:20px;
+padding:25px;
+border-radius:15px;
+background:rgba(255,255,255,0.05);
+backdrop-filter:blur(10px);
+border:1px solid rgba(255,255,255,0.08);
+transition:0.3s;
+}
+
+.job-card:hover{
+transform:translateY(-3px);
+box-shadow:0 10px 30px rgba(0,0,0,0.5);
+}

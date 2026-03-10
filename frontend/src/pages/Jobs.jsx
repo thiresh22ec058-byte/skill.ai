@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import Select from "react-select";
+import { cities } from "../data/cities";
+
+const API = "http://localhost:5000/api";
 
 function Jobs() {
 
@@ -10,9 +14,10 @@ function Jobs() {
   const [profile, setProfile] = useState(null);
   const [jobRoles, setJobRoles] = useState([]);
   const [readiness, setReadiness] = useState(0);
+  const [selectedCities, setSelectedCities] = useState([]);
+  const [loadingJobs, setLoadingJobs] = useState(false);
 
   const token = localStorage.getItem("token");
-  const goal = localStorage.getItem("careerGoal");
 
   /* ================= FETCH PROFILE ================= */
 
@@ -25,7 +30,7 @@ function Jobs() {
       try {
 
         const res = await axios.get(
-          "http://localhost:5000/api/users/me",
+          `${API}/users/me`,
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -51,30 +56,38 @@ function Jobs() {
 
   useEffect(() => {
 
-    if (!profile) return;
+    if (!profile || !token) return;
 
     const fetchJobs = async () => {
 
       try {
 
+        setLoadingJobs(true);
+
+        const cityQuery =
+          selectedCities && selectedCities.length > 0
+            ? selectedCities.map(c => c.value).join(",")
+            : "";
+
         const res = await axios.get(
-          "http://localhost:5000/api/recommend",
+          `${API}/recommend?city=${cityQuery}`,
           {
-            params: {
-              goal
-            },
             headers: {
               Authorization: `Bearer ${token}`
             }
           }
         );
 
-        setJobRoles(res.data.jobs || []);
-        setReadiness(res.data.readiness || 0);
+        setJobRoles(res?.data?.jobs || []);
+        setReadiness(res?.data?.readiness || 0);
 
       } catch (err) {
 
         console.error("Fetch Jobs Error:", err);
+
+      } finally {
+
+        setLoadingJobs(false);
 
       }
 
@@ -82,9 +95,9 @@ function Jobs() {
 
     fetchJobs();
 
-  }, [profile, goal, token]);
+  }, [profile, token, selectedCities]);
 
-  /* ================= LOADING ================= */
+  /* ================= LOADING PROFILE ================= */
 
   if (!profile) {
 
@@ -107,18 +120,73 @@ function Jobs() {
   }
 
   return (
+
     <>
       <Navbar />
 
       <div className="page-container">
 
-        <div className="glass-card">
+        <div className="glass-card job-landing">
 
           <h2 className="hero-title">
             Recommended Jobs For You
           </h2>
 
-          {/* ================= JOB READINESS ================= */}
+          {/* ================= CITY SELECTOR ================= */}
+
+          <div
+            style={{
+              marginTop: "30px",
+              marginBottom: "30px",
+              display: "flex",
+              justifyContent: "center"
+            }}
+          >
+
+            <div style={{ width: "420px" }}>
+
+              <Select
+                isMulti
+                options={cities}
+                placeholder="Search cities in India..."
+                value={selectedCities}
+                onChange={(selected) => {
+
+                  if (selected && selected.length > 4) {
+                    alert("You can select up to 4 cities only");
+                    return;
+                  }
+
+                  setSelectedCities(selected || []);
+
+                }}
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    borderRadius: "10px",
+                    padding: "5px",
+                    color: "white",
+                    boxShadow: "0 0 10px rgba(79,70,229,0.4)"
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    background: "#111"
+                  }),
+                  option: (base) => ({
+                    ...base,
+                    background: "#111",
+                    color: "white"
+                  })
+                }}
+              />
+
+            </div>
+
+          </div>
+
+          {/* ================= READINESS ================= */}
 
           <div style={{ marginTop: "15px", marginBottom: "25px" }}>
 
@@ -152,41 +220,54 @@ function Jobs() {
 
           </div>
 
-          {/* ================= JOB ROLES ================= */}
+          {/* ================= JOB LIST ================= */}
 
-          {jobRoles.map((job, index) => (
+          <div className="jobs-scroll">
 
-            <div
-              key={index}
-              className="analysis-box"
-              style={{ marginTop: "15px" }}
-            >
+            {loadingJobs ? (
 
-              <h3>{job}</h3>
-
-              <p style={{ fontSize: "14px", opacity: 0.8 }}>
-                Location: Bangalore | India
+              <p style={{ marginTop: "20px" }}>
+                Loading jobs...
               </p>
 
-              <p style={{ fontSize: "14px", opacity: 0.8 }}>
-                Salary: ₹4L – ₹12L per annum
+            ) : jobRoles.length === 0 ? (
+
+              <p style={{ marginTop: "20px" }}>
+                No jobs found right now.
               </p>
 
-              <button
-                style={{ marginTop: "10px" }}
-                onClick={() =>
-                  window.open(
-                    `https://www.google.com/search?q=${job}+jobs+india`,
-                    "_blank"
-                  )
-                }
-              >
-                Apply Now
-              </button>
+            ) : (
 
-            </div>
+              jobRoles.map((job, index) => (
 
-          ))}
+                <div
+                  key={index}
+                  className="job-card"
+                >
+
+                  <h3>{job.title}</h3>
+
+                  <p style={{ fontSize: "14px", opacity: 0.8 }}>
+                    Company: {job.company}
+                  </p>
+
+                  <p style={{ fontSize: "14px", opacity: 0.8 }}>
+                    Location: {job.location}
+                  </p>
+
+                  <button
+                    onClick={() => window.open(job.redirect, "_blank")}
+                  >
+                    Apply Now
+                  </button>
+
+                </div>
+
+              ))
+
+            )}
+
+          </div>
 
           {/* ================= NAVIGATION ================= */}
 
@@ -212,7 +293,9 @@ function Jobs() {
         </div>
 
       </div>
+
     </>
+
   );
 
 }

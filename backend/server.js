@@ -6,15 +6,10 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import path from "path";
 import { fileURLToPath } from "url";
-import axios from "axios";
 
-/* ================= IMPORT MODELS ================= */
+/* ================= ENV ================= */
 
-import User from "./models/User.js";
-
-/* ================= IMPORT CONFIG ================= */
-
-import { normalizeGoal, domainSkills } from "./config/careerDomains.js";
+dotenv.config();
 
 /* ================= IMPORT ROUTES ================= */
 
@@ -30,12 +25,6 @@ import jobReadinessRoutes from "./routes/jobReadinessRoutes.js";
 import resumeRoutes from "./routes/resumeRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import progressRoutes from "./routes/progressRoutes.js";
-
-console.log("AI ROUTES IMPORTED");
-
-/* ================= ENV ================= */
-
-dotenv.config();
 
 /* ================= APP ================= */
 
@@ -75,10 +64,6 @@ app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/job-readiness", jobReadinessRoutes);
 app.use("/api/resume", resumeRoutes);
 app.use("/api/ai", aiRoutes);
-app.use("/uploads", express.static("uploads"));
-
-/* ===== PROGRESS TRACKER ROUTE ===== */
-
 app.use("/api/progress", progressRoutes);
 
 /* ================= TEST ROUTE ================= */
@@ -139,6 +124,6 @@ app.get("/api/jobs", (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () =>
-  console.log(`Server running on port ${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});

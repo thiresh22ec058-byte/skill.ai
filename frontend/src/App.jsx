@@ -12,6 +12,10 @@ import Progress from "./pages/Progress";
 import JobReady from "./pages/JobReady";
 import Profile from "./pages/Profile";
 import Jobs from "./pages/Jobs";
+import ResumeBuilder from "./pages/ResumeBuilder";
+import SkillGap from "./pages/SkillGap";
+import AIChat from "./pages/AIChat";
+import Dashboard from "./pages/Dashboard"; // Added
 
 function App() {
   return (
@@ -34,11 +38,17 @@ function App() {
         <Route path="/summary" element={<Summary />} />
 
         {/* Main App */}
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/roadmap" element={<Roadmap />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/jobready" element={<JobReady />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/jobs" element={<Jobs />} />
+
+        {/* New Features */}
+        <Route path="/resume-builder" element={<ResumeBuilder />} />
+        <Route path="/skill-gap" element={<SkillGap />} />
+        <Route path="/ai-chat" element={<AIChat />} />
 
       </Routes>
     </Router>
