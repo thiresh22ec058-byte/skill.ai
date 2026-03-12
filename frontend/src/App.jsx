@@ -46,8 +46,6 @@ function App() {
         <Route path="/jobs" element={<Jobs />} />
 
         {/* New Features */}
-        <Route path="/resume-builder" element={<ResumeBuilder />} />
-        <Route path="/skill-gap" element={<SkillGap />} />
         <Route path="/ai-chat" element={<AIChat />} />
 
       </Routes>

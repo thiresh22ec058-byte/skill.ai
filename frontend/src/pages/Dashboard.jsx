@@ -1,293 +1,335 @@
 import { useState } from "react";
-import api from "../utils/api";
-import SkillRadar from "../components/SkillRadar";
 import Navbar from "../components/Navbar";
 
-export default function Dashboard() {
+export default function Dashboard(){
 
-const [data,setData] = useState(null);
+const [resumeText,setResumeText] = useState("");
+const [skills,setSkills] = useState([]);
+const [career,setCareer] = useState("Not analyzed yet");
 
-/* ================= RESUME UPLOAD ================= */
+const [question,setQuestion] = useState("");
+const [answer,setAnswer] = useState(null);
 
-const uploadResume = async (file)=>{
 
+
+/* -------- Resume Upload -------- */
+
+const handleUpload = async (e)=>{
+
+const file = e.target.files[0];
 if(!file) return;
 
-try{
+const text = await file.text();
+setResumeText(text);
 
-const formData = new FormData();
-formData.append("resume",file);
+};
 
-const res = await api.post(
-"/ai/analyze-resume",
-formData,
-{
-headers:{
-"Content-Type":"multipart/form-data"
+
+
+/* -------- Analyze Resume -------- */
+
+const analyzeResume = ()=>{
+
+if(!resumeText){
+alert("Upload resume first");
+return;
 }
-}
+
+const skillDB=[
+"python","java","javascript","react","node",
+"sql","machine learning","data science",
+"tensorflow","docker","aws","html","css"
+];
+
+const detected = skillDB.filter(skill =>
+resumeText.toLowerCase().includes(skill)
 );
 
-setData(res.data);
+setSkills(detected);
 
-}catch(err){
 
-console.error("Resume upload error:",err);
-alert("Resume analysis failed");
+/* Career detection */
+
+if(detected.includes("machine learning"))
+setCareer("AI Engineer");
+
+else if(detected.includes("react") || detected.includes("javascript"))
+setCareer("Software Developer");
+
+else if(detected.includes("data science"))
+setCareer("Data Scientist");
+
+else
+setCareer("General Software Engineer");
+
+};
+
+
+
+/* -------- AI Assistant -------- */
+
+const askAI = ()=>{
+
+const q = question.toLowerCase();
+
+if(q.includes("ai engineer")){
+
+setAnswer({
+title:"AI Engineer Career Analysis",
+
+description:
+"AI Engineers design intelligent systems that learn from data. The field combines programming, mathematics, and machine learning.",
+
+skills:[
+"Python programming",
+"Machine Learning algorithms",
+"Deep Learning frameworks",
+"Data processing",
+"Model deployment"
+],
+
+projects:[
+"AI chatbot",
+"Image recognition system",
+"Recommendation engine",
+"AI-powered web application"
+],
+
+tips:[
+"Master Python first",
+"Focus on building real AI models",
+"Learn TensorFlow or PyTorch",
+"Study mathematics for machine learning"
+]
+
+});
+
+}
+
+
+
+else if(q.includes("software")){
+
+setAnswer({
+title:"Software Developer Career Analysis",
+
+description:
+"Software Developers build scalable applications used by millions of users. This role focuses on coding, architecture, and solving technical problems.",
+
+skills:[
+"JavaScript or Python",
+"Data Structures",
+"Frontend frameworks (React)",
+"Backend development",
+"System design"
+],
+
+projects:[
+"Portfolio website",
+"Full stack web app",
+"REST API backend",
+"SaaS style application"
+],
+
+tips:[
+"Practice coding problems daily",
+"Build 3 strong portfolio projects",
+"Learn Git and collaboration tools",
+"Understand how large systems scale"
+]
+
+});
+
+}
+
+
+
+else{
+
+setAnswer({
+title:"AI Career Insight",
+
+description:
+"Technology careers reward strong problem solving and practical experience. Focus on mastering fundamentals and building projects.",
+
+skills:[
+"Programming fundamentals",
+"Algorithms",
+"Framework expertise"
+],
+
+projects:[
+"Build portfolio projects",
+"Deploy apps to cloud"
+],
+
+tips:[
+"Consistency beats intensity",
+"Projects matter more than certificates"
+]
+
+});
 
 }
 
 };
 
-/* ================= MARK PHASE COMPLETE ================= */
 
-const markComplete = async (phase)=>{
 
-try{
-
-await api.post(
-"/progress/update",
-{
-career:data?.bestCareer?.title,
-phase:phase,
-status:"completed"
-}
-);
-
-alert("Phase completed successfully");
-
-}catch(err){
-
-console.log("Progress update error:",err);
-
-}
-
-};
-
-/* ================= STYLES ================= */
-
-const card = {
-background:"rgba(255,255,255,0.05)",
-padding:"20px",
-borderRadius:"12px",
-marginBottom:"20px",
-backdropFilter:"blur(10px)"
-};
-
-const title = {
-marginBottom:"10px",
-fontSize:"20px",
-fontWeight:"600"
-};
-
-/* ================= UI ================= */
+/* -------- UI -------- */
 
 return(
 
-<>
+<div className="min-h-screen bg-gradient-to-b from-[#020617] via-[#0f172a] to-[#1e293b] text-white">
 
 <Navbar/>
 
-<div
-style={{
-maxWidth:"1200px",
-margin:"auto",
-padding:"40px 20px",
-color:"white"
-}}
->
+<div className="max-w-7xl mx-auto px-8 py-10">
 
-<h1 style={{marginBottom:"30px"}}>
+<h1 className="text-3xl font-bold text-cyan-400 mb-8">
 AI Career Dashboard
 </h1>
 
-{/* ================= RESUME UPLOAD ================= */}
 
-<div style={card}>
 
-<h2 style={title}>Upload Resume</h2>
+{/* Resume Upload */}
 
-<input
-type="file"
-onChange={(e)=>uploadResume(e.target.files[0])}
-/>
+<div className="bg-[#111827] p-6 rounded-xl mb-8">
 
-<p style={{marginTop:"10px",opacity:0.7}}>
-Upload your resume to get skill analysis, career recommendations,
-skill gaps and a personalized learning roadmap.
-</p>
-
-</div>
-
-{/* ================= EMPTY STATE ================= */}
-
-{!data && (
-
-<div style={{opacity:0.7}}>
-Upload a resume to see your AI career analysis.
-</div>
-
-)}
-
-{/* ================= DASHBOARD GRID ================= */}
-
-{data && (
-
-<div
-style={{
-display:"grid",
-gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",
-gap:"25px",
-marginTop:"20px"
-}}
->
-
-{/* ================= DETECTED SKILLS ================= */}
-
-<div style={card}>
-
-<h3 style={title}>Detected Skills</h3>
-
-{data?.detectedSkills?.length > 0 ? (
-
-<ul>
-{data.detectedSkills.map((s,i)=>(
-<li key={i}>{s}</li>
-))}
-</ul>
-
-) : (
-
-<p>No skills detected</p>
-
-)}
-
-</div>
-
-{/* ================= SKILL RADAR ================= */}
-
-<div style={card}>
-
-<h3 style={title}>Skill Radar</h3>
-
-<SkillRadar skills={data?.detectedSkills || []} />
-
-</div>
-
-{/* ================= CAREER MATCHES ================= */}
-
-<div style={card}>
-
-<h3 style={title}>Top Career Matches</h3>
-
-{data?.matchedCareers?.length > 0 ? (
-
-<ul>
-{data.matchedCareers.slice(0,3).map((c,i)=>(
-<li key={i}>
-{c.title} — {c.score}%
-</li>
-))}
-</ul>
-
-) : (
-
-<p>No career matches found</p>
-
-)}
-
-</div>
-
-{/* ================= RECOMMENDED CAREER ================= */}
-
-<div style={card}>
-
-<h3 style={title}>Recommended Career</h3>
-
-<p style={{fontSize:"18px"}}>
-{data?.bestCareer?.title || "Not available"}
-</p>
-
-</div>
-
-{/* ================= SKILL GAPS ================= */}
-
-<div style={card}>
-
-<h3 style={title}>Skill Gaps</h3>
-
-{data?.skillGaps?.length > 0 ? (
-
-<ul>
-{data.skillGaps.map((s,i)=>(
-<li key={i}>{s}</li>
-))}
-</ul>
-
-) : (
-
-<p>No skill gaps detected</p>
-
-)}
-
-</div>
-
-</div>
-
-)}
-
-{/* ================= ROADMAP ================= */}
-
-{data?.roadmap?.length > 0 && (
-
-<div style={{marginTop:"40px"}}>
-
-<h2 style={{marginBottom:"20px"}}>
-Learning Roadmap
+<h2 className="text-xl font-semibold text-cyan-300 mb-3">
+Upload Resume
 </h2>
 
-{data.roadmap.map((r)=>(
-<div
-key={r.phase}
-style={{
-border:"1px solid rgba(255,255,255,0.15)",
-padding:"20px",
-marginBottom:"20px",
-borderRadius:"10px",
-background:"rgba(255,255,255,0.03)"
-}}
->
-
-<h3>{r.name}</h3>
-
-<p>Duration: {r.duration}</p>
-
-<a
-href={r.playlist}
-target="_blank"
-rel="noreferrer"
-style={{color:"#38bdf8"}}
->
-Watch Course
-</a>
-
-<br/><br/>
+<input type="file" onChange={handleUpload}/>
 
 <button
-onClick={()=>markComplete(r.phase)}
-style={{
-background:"#22c55e",
-border:"none",
-padding:"8px 15px",
-borderRadius:"6px",
-cursor:"pointer"
-}}
+onClick={analyzeResume}
+className="ml-4 px-4 py-2 bg-cyan-500 rounded-lg hover:bg-cyan-600"
 >
-Mark Complete
+Analyze Resume
+</button>
+
+<p className="text-gray-400 mt-2">
+Upload your resume and click Analyze to detect skills.
+</p>
+
+</div>
+
+
+
+{/* Skills */}
+
+<div className="grid md:grid-cols-3 gap-6 mb-6">
+
+<div className="bg-[#111827] p-6 rounded-xl">
+
+<h3 className="text-cyan-300 font-semibold mb-2">
+Detected Skills
+</h3>
+
+{skills.length===0 ?(
+<p className="text-gray-400">No skills detected</p>
+):(
+
+<ul className="list-disc pl-5 text-gray-300">
+{skills.map((s,i)=>(
+<li key={i}>{s}</li>
+))}
+</ul>
+
+)}
+
+</div>
+
+
+
+<div className="bg-[#111827] p-6 rounded-xl">
+
+<h3 className="text-cyan-300 font-semibold mb-2">
+Skill Radar
+</h3>
+
+<p className="text-gray-400">
+AI visualization coming soon
+</p>
+
+</div>
+
+
+
+<div className="bg-[#111827] p-6 rounded-xl">
+
+<h3 className="text-cyan-300 font-semibold mb-2">
+Top Career Match
+</h3>
+
+<p className="text-green-400 font-semibold">
+{career}
+</p>
+
+</div>
+
+</div>
+
+
+
+{/* AI Assistant */}
+
+<div className="bg-[#111827] p-6 rounded-xl">
+
+<h2 className="text-xl text-cyan-300 mb-4">
+AI Career Assistant
+</h2>
+
+<div className="flex gap-3 mb-4">
+
+<input
+value={question}
+onChange={(e)=>setQuestion(e.target.value)}
+placeholder="Ask AI about careers..."
+className="flex-1 px-4 py-2 bg-[#020617] border border-gray-700 rounded-lg"
+/>
+
+<button
+onClick={askAI}
+className="px-5 py-2 bg-cyan-500 rounded-lg hover:bg-cyan-600"
+>
+Analyze
 </button>
 
 </div>
-))}
+
+
+
+{answer &&(
+
+<div className="bg-[#020617] border border-gray-700 rounded-lg p-5">
+
+<h3 className="text-cyan-400 text-lg font-semibold mb-2">
+{answer.title}
+</h3>
+
+<p className="text-gray-300 mb-4">
+{answer.description}
+</p>
+
+<h4 className="text-green-400 mb-2">Key Skills</h4>
+
+<ul className="list-disc pl-6 mb-4">
+{answer.skills.map((s,i)=>(<li key={i}>{s}</li>))}
+</ul>
+
+<h4 className="text-blue-400 mb-2">Recommended Projects</h4>
+
+<ul className="list-disc pl-6 mb-4">
+{answer.projects.map((p,i)=>(<li key={i}>{p}</li>))}
+</ul>
+
+<h4 className="text-yellow-400 mb-2">AI Suggestions</h4>
+
+<ul className="list-disc pl-6">
+{answer.tips.map((t,i)=>(<li key={i}>{t}</li>))}
+</ul>
 
 </div>
 
@@ -295,7 +337,10 @@ Mark Complete
 
 </div>
 
-</>
+
+
+</div>
+</div>
 
 );
 

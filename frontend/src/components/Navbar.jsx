@@ -1,133 +1,47 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
-function Navbar() {
+export default function Navbar() {
 
-  const navigate = useNavigate();
   const location = useLocation();
-  const token = localStorage.getItem("token");
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/");
+  const navBtn = (path, label) => {
+    const active = location.pathname === path;
+
+    return (
+      <Link to={path}>
+        <button
+          className={`px-4 py-2 rounded-xl border transition 
+          ${active 
+            ? "bg-green-500 text-white border-green-500" 
+            : "border-gray-600 text-gray-300 hover:bg-gray-800"}`}
+        >
+          {label}
+        </button>
+      </Link>
+    );
   };
-
-  const btnStyle = {
-    padding: "7px 16px",
-    borderRadius: "10px",
-    border: "1px solid rgba(255,255,255,0.15)",
-    background: "rgba(255,255,255,0.05)",
-    color: "white",
-    cursor: "pointer",
-    fontSize: "14px",
-    transition: "all 0.25s ease"
-  };
-
-  const activeStyle = {
-    background: "#22c55e",
-    color: "white",
-    border: "none"
-  };
-
-  const getStyle = (path) =>
-    location.pathname === path
-      ? { ...btnStyle, ...activeStyle }
-      : btnStyle;
 
   return (
+    <nav className="flex items-center justify-between px-8 py-4 bg-[#0b1324] border-b border-gray-800">
 
-    <div
-      style={{
-        width: "100%",
-        padding: "14px 40px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        background: "linear-gradient(90deg,#0f172a,#020617)"
-      }}
-    >
-
-      <h2
-        style={{ color: "#60a5fa", cursor: "pointer" }}
-        onClick={() => navigate(token ? "/dashboard" : "/")}
-      >
+      {/* Logo */}
+      <h1 className="text-xl font-bold text-blue-400">
         SkillAI
-      </h2>
+      </h1>
 
-      <div style={{ display: "flex", gap: "12px" }}>
+      {/* Navigation */}
+      <div className="flex gap-3">
 
-        {token && (
-          <>
-            <button
-              style={getStyle("/dashboard")}
-              onClick={() => navigate("/dashboard")}
-            >
-              Dashboard
-            </button>
+        {navBtn("/dashboard", "Dashboard")}
+        {navBtn("/profile", "Profile")}
+        {navBtn("/roadmap", "Roadmap")}
+        {navBtn("/jobs", "Jobs")}
 
-            <button
-              style={getStyle("/profile")}
-              onClick={() => navigate("/profile")}
-            >
-              Profile
-            </button>
-
-            <button
-              style={getStyle("/roadmap")}
-              onClick={() => navigate("/roadmap")}
-            >
-              Roadmap
-            </button>
-
-            <button
-              style={getStyle("/jobs")}
-              onClick={() => navigate("/jobs")}
-            >
-              Jobs
-            </button>
-
-            <button
-              style={getStyle("/resume-builder")}
-              onClick={() => navigate("/resume-builder")}
-            >
-              Resume
-            </button>
-
-            <button
-              style={getStyle("/skill-gap")}
-              onClick={() => navigate("/skill-gap")}
-            >
-              Skill Gap
-            </button>
-
-            <button
-              style={getStyle("/ai-chat")}
-              onClick={() => navigate("/ai-chat")}
-            >
-              AI Chat
-            </button>
-
-            <button
-              onClick={handleLogout}
-              style={{
-                padding: "7px 16px",
-                borderRadius: "10px",
-                border: "none",
-                background: "#ef4444",
-                color: "white",
-                cursor: "pointer"
-              }}
-            >
-              Logout
-            </button>
-          </>
-        )}
+        <button className="px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600">
+          Logout
+        </button>
 
       </div>
-
-    </div>
-
+    </nav>
   );
-
 }
-
-export default Navbar;
