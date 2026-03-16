@@ -7,12 +7,20 @@ const [resumeText,setResumeText] = useState("");
 const [skills,setSkills] = useState([]);
 const [career,setCareer] = useState("Not analyzed yet");
 
+const [skillRadar,setSkillRadar] = useState({
+AI:0,
+Web:0,
+IoT:0,
+Business:0,
+Programming:0
+});
+
 const [question,setQuestion] = useState("");
 const [answer,setAnswer] = useState(null);
 
 
 
-/* -------- Resume Upload -------- */
+/* -------- Upload Resume -------- */
 
 const handleUpload = async (e)=>{
 
@@ -35,32 +43,83 @@ alert("Upload resume first");
 return;
 }
 
-const skillDB=[
-"python","java","javascript","react","node",
-"sql","machine learning","data science",
-"tensorflow","docker","aws","html","css"
+const text = resumeText.toLowerCase();
+
+/* Skill Database */
+
+const skillDB = [
+"python","java","javascript","react","node","mongodb","sql",
+"html","css","git","docker","aws",
+"machine learning","tensorflow","data science","data analysis",
+"c","c++","embedded systems","iot","arduino","raspberry pi","lora",
+"chatgpt","prompt engineering",
+"leadership","management","problem solving",
+"stock market","business"
 ];
 
-const detected = skillDB.filter(skill =>
-resumeText.toLowerCase().includes(skill)
+
+/* Detect Skills */
+
+const detectedSkills = skillDB.filter(skill =>
+text.includes(skill)
 );
 
-setSkills(detected);
+setSkills(detectedSkills);
 
 
-/* Career detection */
+/* Radar Categories */
 
-if(detected.includes("machine learning"))
-setCareer("AI Engineer");
+let radar = {
+AI:0,
+Web:0,
+IoT:0,
+Business:0,
+Programming:0
+};
 
-else if(detected.includes("react") || detected.includes("javascript"))
-setCareer("Software Developer");
 
-else if(detected.includes("data science"))
-setCareer("Data Scientist");
+detectedSkills.forEach(skill=>{
 
-else
-setCareer("General Software Engineer");
+if(["machine learning","tensorflow","data science","chatgpt","prompt engineering"].includes(skill))
+radar.AI++;
+
+if(["html","css","javascript","react","node","mongodb"].includes(skill))
+radar.Web++;
+
+if(["iot","embedded systems","arduino","raspberry pi","lora"].includes(skill))
+radar.IoT++;
+
+if(["business","management","leadership","stock market"].includes(skill))
+radar.Business++;
+
+if(["python","java","c","c++"].includes(skill))
+radar.Programming++;
+
+});
+
+setSkillRadar(radar);
+
+
+/* Career Match */
+
+let matchedCareer = "General Engineer";
+
+if(radar.IoT >= 2)
+matchedCareer = "IoT Engineer";
+
+else if(radar.AI >= 2)
+matchedCareer = "AI Engineer";
+
+else if(radar.Web >= 2)
+matchedCareer = "Full Stack Developer";
+
+else if(radar.Business >= 2)
+matchedCareer = "Business Analyst";
+
+else if(radar.Programming >= 2)
+matchedCareer = "Software Developer";
+
+setCareer(matchedCareer);
 
 };
 
@@ -75,99 +134,19 @@ const q = question.toLowerCase();
 if(q.includes("ai engineer")){
 
 setAnswer({
-title:"AI Engineer Career Analysis",
+title:"AI Engineer Career",
 
-description:
-"AI Engineers design intelligent systems that learn from data. The field combines programming, mathematics, and machine learning.",
-
-skills:[
-"Python programming",
-"Machine Learning algorithms",
-"Deep Learning frameworks",
-"Data processing",
-"Model deployment"
-],
-
-projects:[
-"AI chatbot",
-"Image recognition system",
-"Recommendation engine",
-"AI-powered web application"
-],
-
-tips:[
-"Master Python first",
-"Focus on building real AI models",
-"Learn TensorFlow or PyTorch",
-"Study mathematics for machine learning"
-]
-
+description:"AI Engineers build intelligent systems using machine learning and deep learning."
 });
 
 }
-
-
-
-else if(q.includes("software")){
-
-setAnswer({
-title:"Software Developer Career Analysis",
-
-description:
-"Software Developers build scalable applications used by millions of users. This role focuses on coding, architecture, and solving technical problems.",
-
-skills:[
-"JavaScript or Python",
-"Data Structures",
-"Frontend frameworks (React)",
-"Backend development",
-"System design"
-],
-
-projects:[
-"Portfolio website",
-"Full stack web app",
-"REST API backend",
-"SaaS style application"
-],
-
-tips:[
-"Practice coding problems daily",
-"Build 3 strong portfolio projects",
-"Learn Git and collaboration tools",
-"Understand how large systems scale"
-]
-
-});
-
-}
-
-
 
 else{
 
 setAnswer({
-title:"AI Career Insight",
+title:"Career Advice",
 
-description:
-"Technology careers reward strong problem solving and practical experience. Focus on mastering fundamentals and building projects.",
-
-skills:[
-"Programming fundamentals",
-"Algorithms",
-"Framework expertise"
-],
-
-projects:[
-"Build portfolio projects",
-"Deploy apps to cloud"
-],
-
-tips:[
-"Consistency beats intensity",
-"Projects matter more than certificates"
-]
-
+description:"Focus on building strong projects and mastering core skills."
 });
 
 }
@@ -217,9 +196,11 @@ Upload your resume and click Analyze to detect skills.
 
 
 
-{/* Skills */}
+{/* Dashboard Cards */}
 
 <div className="grid md:grid-cols-3 gap-6 mb-6">
+
+{/* Detected Skills */}
 
 <div className="bg-[#111827] p-6 rounded-xl">
 
@@ -229,7 +210,7 @@ Detected Skills
 
 {skills.length===0 ?(
 <p className="text-gray-400">No skills detected</p>
-):(
+):( 
 
 <ul className="list-disc pl-5 text-gray-300">
 {skills.map((s,i)=>(
@@ -243,19 +224,29 @@ Detected Skills
 
 
 
+{/* Skill Radar */}
+
 <div className="bg-[#111827] p-6 rounded-xl">
 
 <h3 className="text-cyan-300 font-semibold mb-2">
 Skill Radar
 </h3>
 
-<p className="text-gray-400">
-AI visualization coming soon
-</p>
+<ul className="text-gray-300">
+
+<li>AI: {skillRadar.AI}</li>
+<li>Web: {skillRadar.Web}</li>
+<li>IoT: {skillRadar.IoT}</li>
+<li>Business: {skillRadar.Business}</li>
+<li>Programming: {skillRadar.Programming}</li>
+
+</ul>
 
 </div>
 
 
+
+{/* Career Match */}
 
 <div className="bg-[#111827] p-6 rounded-xl">
 
@@ -299,8 +290,6 @@ Analyze
 
 </div>
 
-
-
 {answer &&(
 
 <div className="bg-[#020617] border border-gray-700 rounded-lg p-5">
@@ -309,35 +298,15 @@ Analyze
 {answer.title}
 </h3>
 
-<p className="text-gray-300 mb-4">
+<p className="text-gray-300">
 {answer.description}
 </p>
-
-<h4 className="text-green-400 mb-2">Key Skills</h4>
-
-<ul className="list-disc pl-6 mb-4">
-{answer.skills.map((s,i)=>(<li key={i}>{s}</li>))}
-</ul>
-
-<h4 className="text-blue-400 mb-2">Recommended Projects</h4>
-
-<ul className="list-disc pl-6 mb-4">
-{answer.projects.map((p,i)=>(<li key={i}>{p}</li>))}
-</ul>
-
-<h4 className="text-yellow-400 mb-2">AI Suggestions</h4>
-
-<ul className="list-disc pl-6">
-{answer.tips.map((t,i)=>(<li key={i}>{t}</li>))}
-</ul>
 
 </div>
 
 )}
 
 </div>
-
-
 
 </div>
 </div>

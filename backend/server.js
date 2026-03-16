@@ -5,6 +5,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import path from "path";
+import fileUpload from "express-fileupload";
 import { fileURLToPath } from "url";
 
 /* ================= ENV ================= */
@@ -39,6 +40,7 @@ const __dirname = path.dirname(__filename);
 
 app.use(cors());
 app.use(express.json());
+app.use(fileUpload());
 
 /* ================= STATIC FILES ================= */
 
@@ -75,6 +77,7 @@ app.get("/test-server", (req, res) => {
 /* ================= JOBS API ================= */
 
 app.get("/api/jobs", (req, res) => {
+
   try {
 
     const readiness = Number(req.query.readiness);
@@ -114,10 +117,10 @@ app.get("/api/jobs", (req, res) => {
   } catch (error) {
 
     console.error("Jobs API Error:", error);
-
     res.status(500).json({ message: "Server Error" });
 
   }
+
 });
 
 /* ================= START SERVER ================= */

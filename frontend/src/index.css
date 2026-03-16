@@ -684,3 +684,32 @@ transform:translateY(-3px);
 box-shadow:0 10px 30px rgba(0,0,0,0.5);
 }
 
+
+
+.apply-btn{
+  margin-top:12px;
+  padding:10px 22px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.2);
+  background:rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+  transition: all 0.25s ease;
+  box-shadow:0 0 12px rgba(255,255,255,0.15);
+}
+
+/* hover glow */
+.apply-btn:hover{
+  background:rgba(255,255,255,0.15);
+  box-shadow:0 0 18px rgba(79,70,229,0.8);
+}
+
+/* pressed state (green glow) */
+.apply-btn:active{
+  background:linear-gradient(90deg,#22c55e,#4ade80);
+  color:black;
+  box-shadow:0 0 20px #22c55e;
+  transform:scale(0.96);
+}

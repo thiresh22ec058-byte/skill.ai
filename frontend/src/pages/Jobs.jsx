@@ -58,6 +58,11 @@ function Jobs() {
 
     if (!profile || !token) return;
 
+    if (!selectedCities || selectedCities.length === 0) {
+      setJobRoles([]);
+      return;
+    }
+
     const fetchJobs = async () => {
 
       try {
@@ -65,9 +70,7 @@ function Jobs() {
         setLoadingJobs(true);
 
         const cityQuery =
-          selectedCities && selectedCities.length > 0
-            ? selectedCities.map(c => c.value).join(",")
-            : "";
+          selectedCities.map(c => c.value).join(",");
 
         const res = await axios.get(
           `${API}/recommend?city=${cityQuery}`,
@@ -220,11 +223,27 @@ function Jobs() {
 
           </div>
 
+          {/* ================= JOB COUNT ================= */}
+
+          {selectedCities.length > 0 && (
+
+            <p style={{ marginBottom: "15px", opacity: 0.8 }}>
+              Showing {jobRoles.length} jobs in {selectedCities.map(c => c.label).join(", ")}
+            </p>
+
+          )}
+
           {/* ================= JOB LIST ================= */}
 
           <div className="jobs-scroll">
 
-            {loadingJobs ? (
+            {selectedCities.length === 0 ? (
+
+              <p style={{ marginTop: "20px", fontSize: "16px", opacity: 0.8 }}>
+                Select a city to view job opportunities tailored to your career goal.
+              </p>
+
+            ) : loadingJobs ? (
 
               <p style={{ marginTop: "20px" }}>
                 Loading jobs...
@@ -233,7 +252,7 @@ function Jobs() {
             ) : jobRoles.length === 0 ? (
 
               <p style={{ marginTop: "20px" }}>
-                No jobs found right now.
+                No jobs found for the selected city. Try selecting another city.
               </p>
 
             ) : (
@@ -256,6 +275,8 @@ function Jobs() {
                   </p>
 
                   <button
+                    className="apply-btn"
+                    title="Open job application"
                     onClick={() => window.open(job.redirect, "_blank")}
                   >
                     Apply Now
