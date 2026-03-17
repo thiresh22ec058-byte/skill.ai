@@ -1,3 +1,8 @@
+import * as pdfjsLib from "pdfjs-dist";
+import pdfWorker from "pdfjs-dist/build/pdf.worker?url";
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+
 import { useState } from "react";
 import Navbar from "../components/Navbar";
 
@@ -7,119 +12,144 @@ const [resumeText,setResumeText] = useState("");
 const [skills,setSkills] = useState([]);
 const [career,setCareer] = useState("Not analyzed yet");
 
-const [skillRadar,setSkillRadar] = useState({
-AI:0,
-Web:0,
-IoT:0,
-Business:0,
-Programming:0
-});
+const [skillRadar,setSkillRadar] = useState(null);
 
 const [question,setQuestion] = useState("");
 const [answer,setAnswer] = useState(null);
 
 
-
 /* -------- Upload Resume -------- */
 
-const handleUpload = async (e)=>{
+const handleUpload = async (e) => {
 
-const file = e.target.files[0];
-if(!file) return;
+  const file = e.target.files[0];
+  if (!file) return;
 
-const text = await file.text();
-setResumeText(text);
+  const reader = new FileReader();
 
+  reader.onload = async function () {
+
+    const typedarray = new Uint8Array(this.result);
+
+    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+
+    let fullText = "";
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+
+      const pageText = content.items.map(item => item.str).join(" ");
+      fullText += pageText + " ";
+    }
+
+    // ✅ CLEAN TEXT (FIXED)
+    const cleanedText = fullText
+      .toLowerCase()
+      .replace(/\n/g, " ")
+      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    setResumeText(cleanedText);
+
+    // reset
+    setSkills([]);
+    setSkillRadar(null);
+    setCareer("Not analyzed yet");
+
+  };
+
+  reader.readAsArrayBuffer(file);
 };
 
 
 
 /* -------- Analyze Resume -------- */
 
-const analyzeResume = ()=>{
+const analyzeResume = () => {
 
-if(!resumeText){
-alert("Upload resume first");
-return;
-}
+  if (!resumeText) {
+    alert("Upload resume first");
+    return;
+  }
 
-const text = resumeText.toLowerCase();
+  const text = resumeText;
 
-/* Skill Database */
+  /* ================= SKILL DATABASE ================= */
 
-const skillDB = [
-"python","java","javascript","react","node","mongodb","sql",
-"html","css","git","docker","aws",
-"machine learning","tensorflow","data science","data analysis",
-"c","c++","embedded systems","iot","arduino","raspberry pi","lora",
-"chatgpt","prompt engineering",
-"leadership","management","problem solving",
-"stock market","business"
-];
+  const skillDB = {
 
+    Programming: ["python","java","javascript","c","c++","sql","html","css"],
 
-/* Detect Skills */
+    Web: ["react","node","express","mongodb","frontend","backend"],
 
-const detectedSkills = skillDB.filter(skill =>
-text.includes(skill)
-);
+    AI: ["machine learning","deep learning","tensorflow","ai","nlp","chatgpt"],
 
-setSkills(detectedSkills);
+    IoT: ["iot","embedded systems","arduino","raspberry","lora","sensors"],
 
+    Business: ["management","leadership","finance","marketing","communication","reporting","customer"],
 
-/* Radar Categories */
+    Medical: ["anatomy","physiology","diagnosis","patient care","pharmacology"]
 
-let radar = {
-AI:0,
-Web:0,
-IoT:0,
-Business:0,
-Programming:0
-};
+  };
 
+  /* ================= DETECT SKILLS ================= */
 
-detectedSkills.forEach(skill=>{
+  let detectedSkills = [];
 
-if(["machine learning","tensorflow","data science","chatgpt","prompt engineering"].includes(skill))
-radar.AI++;
+  Object.values(skillDB).forEach(category=>{
+    category.forEach(skill=>{
 
-if(["html","css","javascript","react","node","mongodb"].includes(skill))
-radar.Web++;
+      // ✅ FIXED MATCHING (NO REGEX ISSUE)
+      if(text.includes(skill)){
+        detectedSkills.push(skill);
+      }
 
-if(["iot","embedded systems","arduino","raspberry pi","lora"].includes(skill))
-radar.IoT++;
+    });
+  });
 
-if(["business","management","leadership","stock market"].includes(skill))
-radar.Business++;
-
-if(["python","java","c","c++"].includes(skill))
-radar.Programming++;
-
-});
-
-setSkillRadar(radar);
+  detectedSkills = [...new Set(detectedSkills)];
+  setSkills(detectedSkills);
 
 
-/* Career Match */
+  /* ================= CATEGORY SCORING ================= */
 
-let matchedCareer = "General Engineer";
+  let scores = {
+    Programming:0,
+    Web:0,
+    AI:0,
+    IoT:0,
+    Business:0,
+    Medical:0
+  };
 
-if(radar.IoT >= 2)
-matchedCareer = "IoT Engineer";
+  Object.keys(skillDB).forEach(category=>{
+    skillDB[category].forEach(skill=>{
 
-else if(radar.AI >= 2)
-matchedCareer = "AI Engineer";
+      // ✅ FIXED MATCHING
+      if(text.includes(skill)){
+        scores[category]++;
+      }
 
-else if(radar.Web >= 2)
-matchedCareer = "Full Stack Developer";
+    });
+  });
 
-else if(radar.Business >= 2)
-matchedCareer = "Business Analyst";
+  setSkillRadar(scores);
 
-else if(radar.Programming >= 2)
-matchedCareer = "Software Developer";
 
-setCareer(matchedCareer);
+  /* ================= CAREER MATCH ================= */
+
+  let careerResult = "No clear match";
+
+  if(scores.AI > 0) careerResult = "AI Engineer";
+  else if(scores.IoT > 0) careerResult = "IoT Engineer";
+  else if(scores.Web > 0) careerResult = "Full Stack Developer";
+  else if(scores.Programming > 0) careerResult = "Software Developer";
+  else if(scores.Business > 0) careerResult = "Business / Operations Role";
+  else if(scores.Medical > 0) careerResult = "Medical Professional";
+
+  setCareer(careerResult);
 
 };
 
@@ -131,24 +161,16 @@ const askAI = ()=>{
 
 const q = question.toLowerCase();
 
-if(q.includes("ai engineer")){
-
+if(q.includes("ai")){
 setAnswer({
-title:"AI Engineer Career",
-
-description:"AI Engineers build intelligent systems using machine learning and deep learning."
+title:"AI Career",
+description:"AI Engineers build intelligent systems using machine learning."
 });
-
-}
-
-else{
-
+}else{
 setAnswer({
 title:"Career Advice",
-
-description:"Focus on building strong projects and mastering core skills."
+description:"Focus on skills and real-world projects."
 });
-
 }
 
 };
@@ -232,15 +254,27 @@ Detected Skills
 Skill Radar
 </h3>
 
-<ul className="text-gray-300">
+{!skillRadar ? (
+  <p className="text-gray-400">Not analyzed yet</p>
+) : (
 
-<li>AI: {skillRadar.AI}</li>
-<li>Web: {skillRadar.Web}</li>
-<li>IoT: {skillRadar.IoT}</li>
-<li>Business: {skillRadar.Business}</li>
-<li>Programming: {skillRadar.Programming}</li>
+  Object.entries(skillRadar).filter(([_,value])=>value>0).length === 0 ? (
 
-</ul>
+    <p className="text-gray-400">No skills found</p>
+
+  ) : (
+
+    <ul className="text-gray-300">
+      {Object.entries(skillRadar)
+        .filter(([_,value])=>value>0)
+        .map(([key,value])=>(
+          <li key={key}>{key}: {value}</li>
+      ))}
+    </ul>
+
+  )
+
+)}
 
 </div>
 
