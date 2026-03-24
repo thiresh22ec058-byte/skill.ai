@@ -36,6 +36,7 @@ export default function Navbar() {
         {navBtn("/profile", "Profile")}
         {navBtn("/roadmap", "Roadmap")}
         {navBtn("/jobs", "Jobs")}
+        {navBtn("/home", "Home")}
 
         <button className="px-4 py-2 rounded-xl bg-red-500 text-white hover:bg-red-600">
           Logout
