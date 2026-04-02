@@ -3,6 +3,7 @@ import axios from "axios";
 import Navbar from "../components/Navbar";
 import { useNavigate } from "react-router-dom";
 
+
 function Roadmap() {
 
   const [roadmap, setRoadmap] = useState(null);
@@ -10,13 +11,12 @@ function Roadmap() {
 
   const navigate = useNavigate();
 
-  const token = localStorage.getItem("token");
-
   const goal = localStorage.getItem("careerGoal") || "AI Engineer";
 
-  const headers = {
-    Authorization: `Bearer ${token}`
-  };
+ const getHeaders = () => ({
+  Authorization: `Bearer ${localStorage.getItem("token")}`,
+  "Content-Type": "application/json"
+});
 
   const fetchRoadmap = async () => {
 
@@ -25,7 +25,7 @@ function Roadmap() {
       const res = await axios.post(
         "http://localhost:5000/api/roadmap",
         { goal },
-        { headers }
+        { headers: getHeaders() }
       );
 
       if (res.data) {
@@ -44,7 +44,7 @@ function Roadmap() {
 
       const res = await axios.get(
         "http://localhost:5000/api/roadmap/user-progress",
-        { headers }
+        { headers: getHeaders() }
       );
 
       setProgressData(res.data);
@@ -55,14 +55,23 @@ function Roadmap() {
 
   };
 
-  useEffect(() => {
 
-    if (!token) return;
+  /* FIXED useEffect (NO dependency error) */
 
-    fetchRoadmap();
-    fetchProgress();
+ useEffect(() => {
 
-  }, [token]);
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    navigate("/login");
+    return;
+  }
+
+  fetchRoadmap();
+  fetchProgress();
+
+}, []);
+
 
   const markComplete = async (phaseNumber) => {
 
@@ -74,7 +83,7 @@ function Roadmap() {
           goal,
           phaseNumber
         },
-        { headers }
+        { headers: getHeaders() }
       );
 
       fetchRoadmap();
@@ -87,6 +96,8 @@ function Roadmap() {
     }
 
   };
+
+
 
   if (!roadmap || !roadmap.phases) {
 
@@ -193,7 +204,6 @@ function Roadmap() {
 
                 </div>
 
-                {/* FIX: Show course link for unlocked + completed phases */}
                 {playlist && phase.status !== "locked" && (
 
                   <a
