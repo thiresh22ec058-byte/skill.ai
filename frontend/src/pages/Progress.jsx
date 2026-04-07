@@ -64,17 +64,6 @@ function Progress() {
             ))}
           </div>
 
-          <button
-            className="primary-btn"
-            onClick={() =>
-              navigate("/jobready", {
-                state: { progressPercent }
-              })
-            }
-          >
-            Check Job Readiness →
-          </button>
-
         </div>
       </div>
     </Layout>
