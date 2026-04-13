@@ -1,138 +1,452 @@
-import express from "express"
-import multer from "multer"
-import Profile from "../models/Profile.js"
+import { useState, useEffect } from "react";
+import api from "../utils/api";
+import Navbar from "../components/Navbar";
 
-const router = express.Router()
+export default function Profile() {
 
-/* ================= MULTER ================= */
+const [profile,setProfile] = useState(null)
+const [edit,setEdit] = useState(false)
 
-const storage = multer.diskStorage({
-destination:(req,file,cb)=>{
-cb(null,"uploads/")
-},
-filename:(req,file,cb)=>{
-cb(null,Date.now()+"-"+file.originalname)
-}
-})
+const [name,setName] = useState("")
+const [role,setRole] = useState("Fresher")
+const [careerGoal,setCareerGoal] = useState("")
+const [photo,setPhoto] = useState(null)
 
-const upload = multer({storage})
+/* PROJECT */
+
+const [projectTitle,setProjectTitle] = useState("")
+const [projectType,setProjectType] = useState("software")
+const [projectLink,setProjectLink] = useState("")
+const [projectFile,setProjectFile] = useState(null)
+
 
 
 /* ================= GET PROFILE ================= */
 
-router.get("/",async(req,res)=>{
+const getProfile = async ()=>{
 
 try{
 
-let profile = await Profile.findOne()
+const res = await api.get("/profile")
 
-if(!profile){
+setProfile(res.data)
 
-profile = await Profile.create({
-name:"Thiresh",
-experience:"Fresher",
-goal:"Software Development",
-projects:[]
-})
-
-}
-
-res.json(profile)
+setName(res.data?.name || "")
+setRole(res.data?.role || "Fresher")
+setCareerGoal(res.data?.careerGoal || "")
 
 }catch(err){
-res.status(500).json(err)
+
+console.log("Profile Fetch Error",err)
+
 }
 
-})
+}
 
 
-/* ================= UPDATE PROFILE ================= */
 
-router.post("/update",async(req,res)=>{
+/* ================= SAVE PROFILE ================= */
+
+const saveProfile = async ()=>{
 
 try{
 
-const profile = await Profile.findOneAndUpdate(
-{},
-req.body,
-{new:true}
-)
-
-res.json(profile)
-
-}catch(err){
-res.status(500).json(err)
-}
-
+await api.put("/profile/update-profile",{
+name,
+role,
+careerGoal
 })
 
+if(photo){
 
-/* ================= UPLOAD PHOTO ================= */
+const formData = new FormData()
+formData.append("file",photo)
 
-router.post("/upload-photo",upload.single("photo"),async(req,res)=>{
+await api.post("/profile/upload-photo",formData)
 
-try{
-
-const photo = req.file.filename
-
-const profile = await Profile.findOneAndUpdate(
-{},
-{photo},
-{new:true}
-)
-
-res.json(profile)
-
-}catch(err){
-res.status(500).json(err)
 }
 
-})
+alert("Profile Updated")
+
+setEdit(false)
+
+getProfile()
+
+}catch(err){
+
+console.log("Save Error",err)
+
+alert("Save failed")
+
+}
+
+}
 
 
 
 /* ================= ADD PROJECT ================= */
 
-router.post("/add-project",async(req,res)=>{
+const addProject = async ()=>{
 
 try{
 
-const profile = await Profile.findOne()
-
-profile.projects.push(req.body)
-
-await profile.save()
-
-res.json(profile)
-
-}catch(err){
-res.status(500).json(err)
+if(!projectTitle){
+alert("Enter project title")
+return
 }
 
-})
+const formData = new FormData()
+
+formData.append("title",projectTitle)
+formData.append("type",projectType)
+
+if(projectType === "software"){
+formData.append("link",projectLink)
+}
+
+if(projectType === "hardware"){
+formData.append("file",projectFile)
+}
+
+await api.post("/profile/add-project",formData)
+
+setProjectTitle("")
+setProjectLink("")
+setProjectFile(null)
+
+getProfile()
+
+}catch(err){
+
+console.log("Project Error",err)
+
+}
+
+}
 
 
 
 /* ================= DELETE PROJECT ================= */
 
-router.delete("/delete-project/:id",async(req,res)=>{
+const deleteProject = async(index)=>{
 
 try{
 
-const profile = await Profile.findOne()
+await api.delete(`/profile/delete-project/${index}`)
 
-profile.projects = profile.projects.filter(
-p=>p._id.toString() !== req.params.id
-)
-
-await profile.save()
-
-res.json(profile)
+getProfile()
 
 }catch(err){
-res.status(500).json(err)
+
+console.log("Delete Error",err)
+
 }
 
-})
+}
 
-export default router
+
+
+useEffect(()=>{
+getProfile()
+},[])
+
+
+
+return(
+
+<div className="min-h-screen bg-[#020617] text-white">
+
+<Navbar/>
+
+<div className="max-w-6xl mx-auto p-6">
+
+
+
+{/* ================= PROFILE ================= */}
+
+<div className="bg-gradient-to-r from-[#0b1324] to-[#16213e] p-6 rounded-xl mb-6">
+
+<div className="flex justify-between items-center">
+
+<div className="flex gap-6 items-center">
+
+
+{/* IMAGE */}
+
+<div className="w-32 h-32 rounded-full overflow-hidden border-2 border-blue-500">
+
+<img
+src={
+profile?.profilePhoto
+? `http://localhost:5000${profile.profilePhoto}`
+: "https://via.placeholder.com/150"
+}
+className="w-full h-full object-cover"
+/>
+
+</div>
+
+
+
+{/* DETAILS */}
+
+<div>
+
+{edit ? (
+
+<input
+value={name}
+onChange={(e)=>setName(e.target.value)}
+className="bg-[#020617] border p-2 rounded mb-2"
+/>
+
+):( 
+
+<h2 className="text-2xl font-bold">
+{name || "Thiresh"}
+</h2>
+
+)}
+
+
+
+{/* ROLE */}
+
+{edit ? (
+
+<select
+value={role}
+onChange={(e)=>setRole(e.target.value)}
+className="bg-[#020617] border p-2 rounded mb-2"
+>
+
+<option>Fresher</option>
+<option>Student</option>
+<option>Working Professional</option>
+<option>College Student</option>
+<option>Final Year Student</option>
+<option>Job Seeker</option>
+
+</select>
+
+):( 
+
+<p className="text-gray-400">
+{role}
+</p>
+
+)}
+
+
+
+{/* CAREER GOAL */}
+
+<p className="text-yellow-400 text-lg">
+{careerGoal}
+</p>
+
+
+
+{/* FILE */}
+
+{edit && (
+
+<input
+type="file"
+onChange={(e)=>setPhoto(e.target.files[0])}
+className="mt-2"
+/>
+
+)}
+
+</div>
+
+</div>
+
+
+
+{/* BUTTON */}
+
+<div>
+
+{edit ? (
+
+<button
+onClick={saveProfile}
+className="bg-green-500 px-6 py-2 rounded-lg"
+>
+Save Changes
+</button>
+
+):( 
+
+<button
+onClick={()=>setEdit(true)}
+className="bg-blue-500 px-6 py-2 rounded-lg"
+>
+Edit Profile
+</button>
+
+)}
+
+</div>
+
+</div>
+
+</div>
+
+
+
+
+{/* ================= ROADMAP ================= */}
+
+<div className="bg-gradient-to-r from-[#0b1324] to-[#16213e] p-6 rounded-xl mb-6">
+
+<h2 className="text-lg font-semibold mb-3">
+Learning Roadmap
+</h2>
+
+<p>
+Goal: {careerGoal}
+</p>
+
+<p>
+Progress: {profile?.stats?.progressPercent || 0}%
+</p>
+
+</div>
+
+
+
+
+{/* ================= PROJECTS ================= */}
+
+<div className="bg-gradient-to-r from-[#0b1324] to-[#16213e] p-6 rounded-xl">
+
+<h2 className="text-lg font-semibold mb-4">
+My Projects
+</h2>
+
+
+
+{/* PROJECT LIST */}
+
+{profile?.projects?.map((project,index)=>(
+
+<div
+key={index}
+className="flex justify-between bg-[#1e293b] p-3 rounded mb-2"
+>
+
+<p>{project.title}</p>
+
+<div className="flex gap-3">
+
+{project.link && (
+
+<a
+href={project.link}
+target="_blank"
+className="text-blue-400"
+>
+View
+</a>
+
+)}
+
+{project.file && (
+
+<a
+href={`http://localhost:5000${project.file}`}
+target="_blank"
+className="text-blue-400"
+>
+View File
+</a>
+
+)}
+
+<button
+onClick={()=>deleteProject(index)}
+className="bg-red-500 px-3 rounded"
+>
+Delete
+</button>
+
+</div>
+
+</div>
+
+))}
+
+
+
+{/* ADD PROJECT */}
+
+<input
+placeholder="Project Title"
+value={projectTitle}
+onChange={(e)=>setProjectTitle(e.target.value)}
+className="w-full p-2 rounded bg-[#020617] border mt-4"
+/>
+
+
+<select
+value={projectType}
+onChange={(e)=>setProjectType(e.target.value)}
+className="w-full p-2 rounded bg-[#020617] border mt-2"
+>
+
+<option value="software">
+Software Project
+</option>
+
+<option value="hardware">
+Hardware Project
+</option>
+
+</select>
+
+
+
+{projectType === "software" ? (
+
+<input
+placeholder="Project Link"
+value={projectLink}
+onChange={(e)=>setProjectLink(e.target.value)}
+className="w-full p-2 rounded bg-[#020617] border mt-2"
+/>
+
+):( 
+
+<input
+type="file"
+onChange={(e)=>setProjectFile(e.target.files[0])}
+className="mt-2"
+/>
+
+)}
+
+
+
+<button
+onClick={addProject}
+className="bg-green-500 px-6 py-2 rounded mt-3"
+>
+Add Project
+</button>
+
+
+
+</div>
+
+
+
+</div>
+
+</div>
+
+)
+
+}
