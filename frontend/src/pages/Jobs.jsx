@@ -191,38 +191,7 @@ function Jobs() {
 
           {/* ================= READINESS ================= */}
 
-          <div style={{ marginTop: "15px", marginBottom: "25px" }}>
-
-            <h3>Job Readiness: {readiness}%</h3>
-
-            <div
-              style={{
-                height: "10px",
-                width: "100%",
-                background: "rgba(255,255,255,0.1)",
-                borderRadius: "10px",
-                overflow: "hidden",
-                marginTop: "8px"
-              }}
-            >
-
-              <div
-                style={{
-                  width: `${readiness}%`,
-                  height: "100%",
-                  background: "linear-gradient(90deg,#4f46e5,#22d3ee)",
-                  transition: "0.5s"
-                }}
-              />
-
-            </div>
-
-            <p style={{ marginTop: "8px", color: "#facc15" }}>
-              Complete more roadmap weeks and projects to increase your job readiness.
-            </p>
-
-          </div>
-
+          
           {/* ================= JOB COUNT ================= */}
 
           {selectedCities.length > 0 && (
